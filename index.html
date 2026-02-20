@@ -719,7 +719,14 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
 
     renderCausesChart(entry.risk_causes);
     renderGaugeChart(s.indice_frequence, nat.indice_frequence);
-    renderComparisonChart(code, level);
+    // Hide comparison at NAF2 level (no meaningful parent grouping)
+    const compCard = document.querySelector('.comparison-card');
+    if (level === 'naf2') {
+      compCard.style.display = 'none';
+    } else {
+      compCard.style.display = '';
+      renderComparisonChart(code, level);
+    }
   }
 
   // --- Charts ---
