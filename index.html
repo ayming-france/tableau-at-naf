@@ -518,7 +518,9 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
   // --- Helpers ---
   function fmt(n) {
     if (n === undefined || n === null) return '-';
-    return n.toLocaleString('fr-FR');
+    const str = n.toLocaleString('fr-FR');
+    // Replace narrow/non-breaking spaces with regular spaces (invisible in some fonts)
+    return str.replace(/[\u202F\u00A0]/g, ' ');
   }
 
   function badgeHTML(secteur, national, invert) {
@@ -574,11 +576,10 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
     if (items[acIndex]) items[acIndex].scrollIntoView({ block: 'nearest' });
   }
 
-  // Top sectors by nb_salaries for the default browse list
+  // All NAF2 divisions sorted by code for the default browse list
   const defaultEntries = (function() {
     return Object.entries(DATA.by_naf2)
-      .sort((a, b) => b[1].stats.nb_salaries - a[1].stats.nb_salaries)
-      .slice(0, 15)
+      .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([code, v]) => ({ code, libelle: v.libelle, level: 'naf2' }));
   })();
 
@@ -646,15 +647,14 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
 
   function adaptCode(code, targetLevel) {
     const store = getStore(targetLevel);
+    // Direct match
     if (store[code]) return code;
-    if (targetLevel === 'naf4') return store[code.substring(0, 4)] ? code.substring(0, 4) : null;
+    // Going up: truncate
+    if (targetLevel === 'naf4' && code.length >= 4) return store[code.substring(0, 4)] ? code.substring(0, 4) : null;
     if (targetLevel === 'naf2') return store[code.substring(0, 2)] ? code.substring(0, 2) : null;
-    if (targetLevel === 'naf5') {
-      const prefix = code;
-      const match = Object.keys(store).find(k => k.startsWith(prefix));
-      return match || null;
-    }
-    return null;
+    // Going down: find first code starting with current prefix
+    const match = Object.keys(store).find(k => k.startsWith(code));
+    return match || null;
   }
 
   // --- Select & Render ---
