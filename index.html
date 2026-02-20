@@ -545,6 +545,10 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
     debounceTimer = setTimeout(() => showAutocomplete(this.value), 120);
   });
 
+  searchInput.addEventListener('focus', function() {
+    if (!this.value) showAutocomplete('');
+  });
+
   searchInput.addEventListener('keydown', function(e) {
     const items = acBox.querySelectorAll('.ac-item');
     if (e.key === 'ArrowDown') {
@@ -570,12 +574,24 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
     if (items[acIndex]) items[acIndex].scrollIntoView({ block: 'nearest' });
   }
 
+  // Top sectors by nb_salaries for the default browse list
+  const defaultEntries = (function() {
+    return Object.entries(DATA.by_naf2)
+      .sort((a, b) => b[1].stats.nb_salaries - a[1].stats.nb_salaries)
+      .slice(0, 15)
+      .map(([code, v]) => ({ code, libelle: v.libelle, level: 'naf2' }));
+  })();
+
   function showAutocomplete(query) {
-    if (!query || query.length < 1) { closeAc(); return; }
-    const q = normalize(query);
-    const matches = DATA.naf_index.filter(e =>
-      normalize(e.code).includes(q) || normalize(e.libelle).includes(q)
-    ).slice(0, 15);
+    let matches;
+    if (!query || query.length < 1) {
+      matches = defaultEntries;
+    } else {
+      const q = normalize(query);
+      matches = DATA.naf_index.filter(e =>
+        normalize(e.code).includes(q) || normalize(e.libelle).includes(q)
+      ).slice(0, 15);
+    }
 
     if (matches.length === 0) { closeAc(); return; }
 
