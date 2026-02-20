@@ -3,65 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accidents du Travail par Secteur</title>
+<title>Accidents du Travail par Secteur | Ameli 2023</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #f8f9fb;
-    --surface: #ffffff;
-    --text: #1a1a2e;
-    --text-muted: #6b7280;
-    --border: #e5e7eb;
-    --accent: #3b5bdb;
-    --accent-light: #eef2ff;
-    --positive: #059669;
-    --positive-bg: #ecfdf5;
-    --negative: #dc2626;
-    --negative-bg: #fef2f2;
-    --radius: 12px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+    --bg: #0f1419;
+    --bg-elevated: #161b22;
+    --bg-card: #1c2128;
+    --border: #2d333b;
+    --border-light: #373e47;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-dim: #545d68;
+    --accent: #d4a043;
+    --accent-glow: rgba(212,160,67,0.12);
+    --danger: #e5534b;
+    --danger-dim: rgba(229,83,75,0.15);
+    --safe: #3fb950;
+    --safe-dim: rgba(63,185,80,0.15);
+    --mono: 'JetBrains Mono', 'SF Mono', monospace;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', -apple-system, sans-serif;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--sans);
     background: var(--bg);
     color: var(--text);
-    line-height: 1.5;
+    line-height: 1.55;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Subtle noise texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
   }
 
   .container {
-    max-width: 1120px;
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 24px 20px 60px;
+    padding: 48px 24px 80px;
   }
 
-  /* Header */
+  /* ===== HEADER ===== */
   header {
-    text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
   }
   header h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 4px;
+    font-family: var(--serif);
+    font-size: 2.4rem;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    margin-bottom: 8px;
   }
   header p {
-    color: var(--text-muted);
-    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    font-weight: 300;
   }
 
-  /* Search */
-  .search-section {
-    margin-bottom: 28px;
-  }
+  /* ===== SEARCH ===== */
+  .search-section { margin-bottom: 40px; }
   .search-row {
     display: flex;
-    gap: 8px;
+    gap: 12px;
     align-items: stretch;
   }
   .search-wrapper {
@@ -70,228 +100,273 @@
   }
   .search-wrapper input {
     width: 100%;
-    padding: 12px 16px 12px 42px;
-    border: 2px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 1rem;
-    background: var(--surface);
-    transition: border-color 0.15s;
+    padding: 14px 16px 14px 44px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 0.88rem;
+    font-weight: 400;
+    background: var(--bg-elevated);
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
     outline: none;
   }
-  .search-wrapper input:focus { border-color: var(--accent); }
+  .search-wrapper input::placeholder { color: var(--text-dim); }
+  .search-wrapper input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
   .search-wrapper .icon {
     position: absolute;
-    left: 14px;
+    left: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 1.1rem;
+    color: var(--text-dim);
+    font-size: 0.9rem;
     pointer-events: none;
+    font-family: var(--sans);
   }
 
   /* Autocomplete */
   .autocomplete {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 4px);
     left: 0;
     right: 0;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-lg);
-    max-height: 320px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 2px;
+    max-height: 360px;
     overflow-y: auto;
     z-index: 100;
     display: none;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
   }
   .autocomplete.open { display: block; }
+  .autocomplete::-webkit-scrollbar { width: 6px; }
+  .autocomplete::-webkit-scrollbar-track { background: transparent; }
+  .autocomplete::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
   .ac-item {
     padding: 10px 16px;
     cursor: pointer;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 12px;
     border-bottom: 1px solid var(--border);
     transition: background 0.1s;
   }
   .ac-item:last-child { border-bottom: none; }
-  .ac-item:hover, .ac-item.active { background: var(--accent-light); }
+  .ac-item:hover, .ac-item.active { background: var(--accent-glow); }
   .ac-item .code {
+    font-family: var(--mono);
     font-weight: 600;
-    font-family: "SF Mono", "Fira Code", monospace;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
+    color: var(--accent);
+    min-width: 54px;
   }
   .ac-item .libelle {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    margin-left: 12px;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
     flex: 1;
-    text-align: left;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .ac-item .level-tag {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
     padding: 2px 6px;
-    border-radius: 4px;
-    background: var(--accent-light);
-    color: var(--accent);
-    margin-left: 8px;
+    border: 1px solid var(--border-light);
+    border-radius: 2px;
+    color: var(--text-dim);
     flex-shrink: 0;
   }
 
   /* Level tabs */
-  .level-tabs {
-    display: flex;
-    gap: 4px;
-  }
+  .level-tabs { display: flex; gap: 2px; }
   .level-tabs button {
-    padding: 10px 16px;
-    border: 2px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    font-size: 0.85rem;
-    font-weight: 600;
+    padding: 14px 20px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--bg-elevated);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
     cursor: pointer;
     transition: all 0.15s;
-    color: var(--text-muted);
+    color: var(--text-dim);
   }
-  .level-tabs button:hover { border-color: var(--accent); color: var(--accent); }
+  .level-tabs button:hover { color: var(--text-secondary); border-color: var(--border-light); }
   .level-tabs button.active {
     background: var(--accent);
-    color: white;
+    color: var(--bg);
     border-color: var(--accent);
+    font-weight: 600;
   }
 
-  /* Results panel (hidden until search) */
+  /* ===== RESULTS ===== */
   #results { display: none; }
-  #results.visible { display: block; }
+  #results.visible { display: block; animation: fadeUp 0.35s ease-out; }
 
-  /* Current selection header */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Selection header */
   .selection-header {
-    margin-bottom: 20px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
   }
   .selection-header h2 {
-    font-size: 1.35rem;
-    font-weight: 700;
+    font-family: var(--serif);
+    font-size: 1.65rem;
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 4px;
   }
   .selection-header .sub {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin-top: 2px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
   }
 
-  /* KPI cards */
+  /* ===== KPI GRID ===== */
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .kpi-card {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 20px;
-    box-shadow: var(--shadow);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 40px;
     border: 1px solid var(--border);
   }
+  .kpi-card {
+    background: var(--bg-elevated);
+    padding: 24px;
+  }
   .kpi-card .label {
-    font-size: 0.78rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    font-weight: 600;
-    margin-bottom: 6px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
   }
   .kpi-card .value {
-    font-size: 1.6rem;
-    font-weight: 700;
-    line-height: 1.2;
+    font-family: var(--serif);
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--text);
   }
   .kpi-card .badge {
     display: inline-block;
-    margin-top: 6px;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 0.78rem;
-    font-weight: 600;
+    margin-top: 8px;
+    padding: 3px 8px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    border-radius: 2px;
   }
-  .badge.up { background: var(--negative-bg); color: var(--negative); }
-  .badge.down { background: var(--positive-bg); color: var(--positive); }
-  .badge.neutral { background: #f3f4f6; color: var(--text-muted); }
+  .badge.up { background: var(--danger-dim); color: var(--danger); }
+  .badge.down { background: var(--safe-dim); color: var(--safe); }
+  .badge.neutral { background: rgba(139,148,158,0.1); color: var(--text-secondary); }
 
-  /* Charts row */
+  /* ===== CHARTS ===== */
   .charts-row {
     display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 16px;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 24px;
     margin-bottom: 24px;
   }
   .chart-card {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 20px;
-    box-shadow: var(--shadow);
+    background: var(--bg-elevated);
     border: 1px solid var(--border);
+    padding: 24px;
   }
   .chart-card h3 {
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 16px;
-    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 20px;
   }
   .chart-card .chart-wrap {
     position: relative;
     width: 100%;
   }
-  .chart-card .chart-wrap canvas {
-    width: 100% !important;
-  }
 
-  /* Comparison section */
+  /* Comparison */
   .comparison-card {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 20px;
-    box-shadow: var(--shadow);
+    background: var(--bg-elevated);
     border: 1px solid var(--border);
+    padding: 24px;
   }
   .comparison-card h3 {
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 16px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 20px;
   }
 
-  /* Empty state */
+  /* ===== EMPTY STATE ===== */
   .empty-state {
     text-align: center;
-    padding: 80px 20px;
-    color: var(--text-muted);
+    padding: 100px 20px;
+    color: var(--text-dim);
   }
-  .empty-state .icon-big { font-size: 3rem; margin-bottom: 12px; }
-  .empty-state p { font-size: 1.05rem; }
+  .empty-state .prompt-hint {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    border: 1px dashed var(--border);
+    display: inline-block;
+    padding: 12px 24px;
+    margin-top: 12px;
+  }
+  .empty-state .prompt-hint span { color: var(--accent); }
+  .empty-state p {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+  }
 
-  /* Footer */
+  /* ===== FOOTER ===== */
   footer {
-    text-align: center;
-    padding: 24px 0 0;
-    color: var(--text-muted);
-    font-size: 0.78rem;
+    margin-top: 48px;
+    padding-top: 24px;
     border-top: 1px solid var(--border);
-    margin-top: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-dim);
   }
-  footer a { color: var(--accent); text-decoration: none; }
+  footer a { color: var(--text-secondary); text-decoration: none; transition: color 0.15s; }
+  footer a:hover { color: var(--accent); }
 
-  /* Responsive */
+  /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
-    .charts-row { grid-template-columns: 1fr; }
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    header h1 { font-size: 1.35rem; }
+    .container { padding: 24px 16px 60px; }
+    header h1 { font-size: 1.65rem; }
     .search-row { flex-direction: column; }
-    .level-tabs { justify-content: center; }
+    .level-tabs { justify-content: stretch; }
+    .level-tabs button { flex: 1; text-align: center; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .kpi-card .value { font-size: 1.5rem; }
+    footer { flex-direction: column; gap: 8px; text-align: center; }
   }
 </style>
 </head>
@@ -299,15 +374,16 @@
 
 <div class="container">
   <header>
+    <div class="header-eyebrow">Ameli Open Data 2023</div>
     <h1>Accidents du Travail par Secteur</h1>
-    <p>Donnees Ameli 2023 &middot; Statistiques AT par code NAF</p>
+    <p>Statistiques de sinistralite par code NAF. 729 secteurs, 19,3M salaries.</p>
   </header>
 
   <div class="search-section">
     <div class="search-row">
       <div class="search-wrapper">
-        <span class="icon">&#128269;</span>
-        <input type="text" id="searchInput" placeholder="Code NAF ou activite (ex: 4711D, supermarche, BTP...)" autocomplete="off">
+        <span class="icon">/</span>
+        <input type="text" id="searchInput" placeholder="code NAF ou activite..." autocomplete="off">
         <div class="autocomplete" id="autocomplete"></div>
       </div>
       <div class="level-tabs" id="levelTabs">
@@ -319,8 +395,8 @@
   </div>
 
   <div class="empty-state" id="emptyState">
-    <div class="icon-big">&#128202;</div>
-    <p>Recherchez un code NAF pour afficher les statistiques AT</p>
+    <p>Recherchez un secteur d'activite</p>
+    <div class="prompt-hint"><span>4711D</span> supermarche &middot; <span>4120</span> construction &middot; <span>86</span> sante</div>
   </div>
 
   <div id="results">
@@ -349,7 +425,8 @@
   </div>
 
   <footer>
-    Source : <a href="https://assurance-maladie.ameli.fr/etudes-et-donnees/risque-at-ctn-x-naf-serie-annuelle" target="_blank">Ameli Open Data</a> &middot; Risque AT par CTN x NAF 2023
+    <span>Source : <a href="https://assurance-maladie.ameli.fr/etudes-et-donnees/risque-at-ctn-x-naf-serie-annuelle" target="_blank">Ameli, Risque AT par CTN x NAF 2023</a></span>
+    <span>729 codes NAF5 &middot; 89 divisions</span>
   </footer>
 </div>
 
@@ -365,7 +442,7 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
   let causesChart = null;
   let gaugeChart = null;
   let compChart = null;
-  let acIndex = -1; // autocomplete active index
+  let acIndex = -1;
 
   // --- Elements ---
   const searchInput = document.getElementById('searchInput');
@@ -373,6 +450,11 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
   const resultsDiv = document.getElementById('results');
   const emptyState = document.getElementById('emptyState');
   const levelTabs = document.getElementById('levelTabs');
+
+  // --- Chart defaults for dark theme ---
+  Chart.defaults.color = '#8b949e';
+  Chart.defaults.borderColor = '#2d333b';
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
 
   // --- Helpers ---
   function fmt(n) {
@@ -384,7 +466,6 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
     if (!national || national === 0) return '';
     const pct = ((secteur - national) / national * 100);
     const sign = pct >= 0 ? '+' : '';
-    // For accidents: higher = worse (up=red), unless inverted
     let cls = pct > 5 ? 'up' : pct < -5 ? 'down' : 'neutral';
     if (invert) cls = cls === 'up' ? 'down' : cls === 'down' ? 'up' : 'neutral';
     return `<span class="badge ${cls}">${sign}${pct.toFixed(0)}% vs national</span>`;
@@ -475,7 +556,6 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
     btn.addEventListener('click', function() {
       setLevel(this.dataset.level);
       if (currentCode) {
-        // Try to find equivalent code at new level
         const newCode = adaptCode(currentCode, currentLevel);
         if (newCode) selectCode(newCode, currentLevel);
       }
@@ -491,13 +571,10 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
 
   function adaptCode(code, targetLevel) {
     const store = getStore(targetLevel);
-    // Direct match
     if (store[code]) return code;
-    // Try prefix/suffix adaptation
     if (targetLevel === 'naf4') return store[code.substring(0, 4)] ? code.substring(0, 4) : null;
     if (targetLevel === 'naf2') return store[code.substring(0, 2)] ? code.substring(0, 2) : null;
     if (targetLevel === 'naf5') {
-      // Find first naf5 code starting with this prefix
       const prefix = code;
       const match = Object.keys(store).find(k => k.startsWith(prefix));
       return match || null;
@@ -525,14 +602,12 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
     const s = entry.stats;
     const nat = DATA.meta.national;
 
-    // Title
     document.getElementById('selTitle').textContent = `${code} \u2014 ${entry.libelle}`;
     const levelLabel = level === 'naf5' ? 'Code NAF' : level === 'naf4' ? 'Sous-classe NAF' : 'Division NAF';
     let subText = levelLabel;
-    if (entry.codes_naf5) subText += ` \u00B7 ${entry.codes_naf5.length} codes NAF5 agreg\u00E9s`;
+    if (entry.codes_naf5) subText += ` // ${entry.codes_naf5.length} codes NAF5 agreg\u00E9s`;
     document.getElementById('selSub').textContent = subText;
 
-    // KPI cards
     const kpis = [
       { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
       { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
@@ -550,21 +625,16 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
       </div>`
     ).join('');
 
-    // Causes chart
     renderCausesChart(entry.risk_causes);
-
-    // Gauge chart
     renderGaugeChart(s.indice_frequence, nat.indice_frequence);
-
-    // Comparison chart
     renderComparisonChart(code, level);
   }
 
   // --- Charts ---
   const CAUSE_COLORS = [
-    '#3b5bdb','#5c7cfa','#748ffc','#91a7ff',
-    '#bac8ff','#dbe4ff','#4dabf7','#74c0fc',
-    '#a5d8ff','#c3fae8','#96f2d7','#63e6be'
+    '#d4a043','#c08b30','#ab7720','#e8bc6a',
+    '#f0d090','#8b6914','#b8963e','#d4b870',
+    '#a08040','#c0a050','#e0c878','#f5e0a0'
   ];
 
   function renderCausesChart(causes) {
@@ -583,8 +653,8 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
         datasets: [{
           data: values,
           backgroundColor: CAUSE_COLORS.slice(0, values.length),
-          borderRadius: 4,
-          barThickness: 22,
+          borderRadius: 1,
+          barThickness: 20,
         }]
       },
       options: {
@@ -594,14 +664,19 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
         plugins: {
           legend: { display: false },
           tooltip: {
-            callbacks: { label: ctx => `${ctx.parsed.x.toFixed(1)}%` }
+            backgroundColor: '#1c2128',
+            borderColor: '#2d333b',
+            borderWidth: 1,
+            titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
+            bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+            callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(1)}%` }
           }
         },
         scales: {
           x: {
             beginAtZero: true,
-            ticks: { callback: v => v + '%' },
-            grid: { color: '#f0f0f0' }
+            ticks: { callback: v => v + '%', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+            grid: { color: 'rgba(45,51,59,0.5)' }
           },
           y: {
             grid: { display: false },
@@ -618,8 +693,7 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
     if (gaugeChart) gaugeChart.destroy();
 
     const maxIF = Math.max(secteurIF, nationalIF) * 1.5;
-    const pct = (secteurIF / maxIF * 100).toFixed(0);
-    const natPct = (nationalIF / maxIF * 100).toFixed(0);
+    const isAbove = secteurIF > nationalIF;
 
     gaugeChart = new Chart(document.getElementById('gaugeChart'), {
       type: 'doughnut',
@@ -628,8 +702,8 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
         datasets: [{
           data: [secteurIF, Math.max(0, maxIF - secteurIF)],
           backgroundColor: [
-            secteurIF > nationalIF ? '#dc2626' : '#059669',
-            '#f0f0f0'
+            isAbove ? '#e5534b' : '#3fb950',
+            '#2d333b'
           ],
           borderWidth: 0,
           circumference: 180,
@@ -640,7 +714,7 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
         responsive: true,
         maintainAspectRatio: true,
         aspectRatio: 1.4,
-        cutout: '75%',
+        cutout: '78%',
         plugins: {
           legend: { display: false },
           tooltip: { enabled: false }
@@ -651,25 +725,22 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
         afterDraw(chart) {
           const { ctx, chartArea } = chart;
           const cx = (chartArea.left + chartArea.right) / 2;
-          const cy = chartArea.top + (chartArea.bottom - chartArea.top) * 0.92;
+          const cy = chartArea.top + (chartArea.bottom - chartArea.top) * 0.88;
 
           ctx.save();
           ctx.textAlign = 'center';
 
-          // Secteur value
-          ctx.font = 'bold 28px -apple-system, sans-serif';
-          ctx.fillStyle = secteurIF > nationalIF ? '#dc2626' : '#059669';
-          ctx.fillText(secteurIF.toFixed(1), cx, cy - 16);
+          ctx.font = "400 32px 'DM Serif Display', Georgia, serif";
+          ctx.fillStyle = isAbove ? '#e5534b' : '#3fb950';
+          ctx.fillText(secteurIF.toFixed(1), cx, cy - 14);
 
-          // Label
-          ctx.font = '12px -apple-system, sans-serif';
-          ctx.fillStyle = '#6b7280';
-          ctx.fillText('IF secteur', cx, cy + 2);
+          ctx.font = "500 10px 'JetBrains Mono', monospace";
+          ctx.fillStyle = '#545d68';
+          ctx.fillText('IF SECTEUR', cx, cy + 6);
 
-          // National line
-          ctx.font = '11px -apple-system, sans-serif';
-          ctx.fillStyle = '#6b7280';
-          ctx.fillText(`National : ${nationalIF.toFixed(1)}`, cx, cy + 20);
+          ctx.font = "400 12px 'DM Sans', sans-serif";
+          ctx.fillStyle = '#8b949e';
+          ctx.fillText(`National : ${nationalIF.toFixed(1)}`, cx, cy + 26);
 
           ctx.restore();
         }
@@ -678,7 +749,6 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
   }
 
   function renderComparisonChart(code, level) {
-    // Find siblings: same parent level, top 10 by IF
     let siblings = [];
     const store = getStore(level);
 
@@ -688,22 +758,21 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
         .filter(([k]) => k.startsWith(naf4))
         .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
       document.getElementById('compTitle').textContent =
-        `Comparaison NAF5 dans ${naf4}`;
+        `Comparaison NAF5 // ${naf4}`;
     } else if (level === 'naf4') {
       const naf2 = code.substring(0, 2);
       siblings = Object.entries(store)
         .filter(([k, v]) => v.naf2 === naf2)
         .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
       document.getElementById('compTitle').textContent =
-        `Comparaison NAF4 dans division ${naf2}`;
+        `Comparaison NAF4 // division ${naf2}`;
     } else {
       siblings = Object.entries(store)
         .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
       document.getElementById('compTitle').textContent =
-        `Comparaison NAF2 (toutes divisions)`;
+        `Comparaison NAF2 // toutes divisions`;
     }
 
-    // Sort by IF descending, keep top 10 but always include current
     siblings.sort((a, b) => b.if_val - a.if_val);
     let top = siblings.slice(0, 10);
     if (!top.find(s => s.code === code)) {
@@ -711,9 +780,10 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
       if (current) { top.pop(); top.push(current); top.sort((a,b) => b.if_val - a.if_val); }
     }
 
-    const labels = top.map(s => `${s.code} ${s.libelle}`.substring(0, 40));
+    const labels = top.map(s => `${s.code}  ${s.libelle}`.substring(0, 40));
     const values = top.map(s => s.if_val);
-    const colors = top.map(s => s.code === code ? '#3b5bdb' : '#bac8ff');
+    const colors = top.map(s => s.code === code ? '#d4a043' : '#2d333b');
+    const borderColors = top.map(s => s.code === code ? '#d4a043' : '#373e47');
 
     if (compChart) compChart.destroy();
     compChart = new Chart(document.getElementById('compChart'), {
@@ -723,8 +793,10 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
         datasets: [{
           data: values,
           backgroundColor: colors,
-          borderRadius: 4,
-          barThickness: 24,
+          borderColor: borderColors,
+          borderWidth: 1,
+          borderRadius: 1,
+          barThickness: 22,
         }]
       },
       options: {
@@ -734,14 +806,25 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
         plugins: {
           legend: { display: false },
           tooltip: {
-            callbacks: { label: ctx => `IF: ${ctx.parsed.x.toFixed(1)}` }
+            backgroundColor: '#1c2128',
+            borderColor: '#2d333b',
+            borderWidth: 1,
+            titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
+            bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+            callbacks: { label: ctx => ` IF: ${ctx.parsed.x.toFixed(1)}` }
           }
         },
         scales: {
           x: {
             beginAtZero: true,
-            title: { display: true, text: 'Indice de frequence' },
-            grid: { color: '#f0f0f0' }
+            title: {
+              display: true,
+              text: 'Indice de frequence',
+              font: { family: "'JetBrains Mono', monospace", size: 10, weight: '500' },
+              color: '#545d68'
+            },
+            ticks: { font: { family: "'JetBrains Mono', monospace", size: 10 } },
+            grid: { color: 'rgba(45,51,59,0.5)' }
           },
           y: {
             grid: { display: false },
@@ -759,7 +842,6 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
     const hash = window.location.hash.replace('#', '').trim();
     if (!hash) return;
 
-    // Auto-detect level
     for (const level of ['naf5', 'naf4', 'naf2']) {
       if (getStore(level)[hash]) {
         setLevel(level);
@@ -767,7 +849,6 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
         return;
       }
     }
-    // Try uppercase
     const upper = hash.toUpperCase();
     for (const level of ['naf5', 'naf4', 'naf2']) {
       if (getStore(level)[upper]) {
