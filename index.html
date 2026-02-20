@@ -335,6 +335,35 @@
     margin-top: 12px;
   }
   .empty-state .prompt-hint span { color: var(--accent); }
+  .naf-explainer {
+    margin-top: 32px;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+  }
+  .naf-level {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .naf-level strong {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 42px;
+    letter-spacing: 0.03em;
+  }
+  .naf-level .naf-ex {
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    margin-left: auto;
+    padding-left: 16px;
+  }
   .empty-state p {
     font-family: var(--serif);
     font-style: italic;
@@ -397,6 +426,11 @@
   <div class="empty-state" id="emptyState">
     <p>Recherchez un secteur d'activite</p>
     <div class="prompt-hint"><span>4711D</span> supermarche &middot; <span>4120</span> construction &middot; <span>86</span> sante</div>
+    <div class="naf-explainer">
+      <div class="naf-level"><strong>NAF5</strong> Code activite precis <span class="naf-ex">4711D = Supermarches</span></div>
+      <div class="naf-level"><strong>NAF4</strong> Sous-classe, regroupe les variantes <span class="naf-ex">4711 = Commerce d'alimentation generale</span></div>
+      <div class="naf-level"><strong>NAF2</strong> Division sectorielle large <span class="naf-ex">47 = Commerce de detail</span></div>
+    </div>
   </div>
 
   <div id="results">
