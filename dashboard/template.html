@@ -700,8 +700,24 @@
     if (entry.codes_naf5) subText += ` // ${entry.codes_naf5.length} codes NAF5 agreg\u00E9s`;
     document.getElementById('selSub').textContent = subText;
 
+    // Compute AT ranking at current level
+    const allAtLevel = Object.entries(getStore(level))
+      .map(([k, v]) => ({ code: k, at: v.stats.at_1er_reglement }))
+      .sort((a, b) => b.at - a.at);
+    const rank = allAtLevel.findIndex(e => e.code === code) + 1;
+    const total = allAtLevel.length;
+    const pctile = Math.round(rank / total * 100);
+    let rankLabel;
+    if (pctile <= 1) rankLabel = 'Top 1%';
+    else if (pctile <= 5) rankLabel = 'Top 5%';
+    else if (pctile <= 10) rankLabel = 'Top 10%';
+    else if (pctile <= 25) rankLabel = 'Top 25%';
+    else if (pctile <= 50) rankLabel = 'Top 50%';
+    else rankLabel = `${rank}e / ${total}`;
+    const rankBadge = `<span class="badge up">${rankLabel}</span>`;
+
     const kpis = [
-      { label: 'Accidents du travail', value: fmt(s.at_1er_reglement), badge: '' },
+      { label: 'Accidents du travail', value: fmt(s.at_1er_reglement), badge: rankBadge },
       { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
       { label: 'Taux de gravite', value: fmt(s.taux_gravite), badge: badgeHTML(s.taux_gravite, nat.taux_gravite) },
       { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
