@@ -88,7 +88,18 @@
   }
 
   /* ===== SEARCH ===== */
-  .search-section { margin-bottom: 40px; }
+  .search-section {
+    margin-bottom: 40px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg);
+    padding: 12px 0;
+    margin-left: -24px;
+    margin-right: -24px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
   .search-row {
     display: flex;
     gap: 12px;
@@ -280,7 +291,7 @@
   /* ===== CHARTS ===== */
   .charts-row {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 24px;
     margin-bottom: 24px;
   }
@@ -318,6 +329,215 @@
     color: var(--text-dim);
     margin-bottom: 20px;
   }
+
+  /* ===== INSIGHTS ===== */
+  .insights-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .insights-panel:empty { display: none; }
+  .insight {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: var(--text);
+  }
+  .insight .insight-icon {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  .insight.warn {
+    background: rgba(212,160,67,0.1);
+    border: 1px solid rgba(212,160,67,0.25);
+  }
+  .insight.warn .insight-icon { color: var(--accent); }
+  .insight.danger {
+    background: var(--danger-dim);
+    border: 1px solid rgba(229,83,75,0.25);
+  }
+  .insight.danger .insight-icon { color: var(--danger); }
+  .insight.info {
+    background: rgba(78,138,197,0.1);
+    border: 1px solid rgba(78,138,197,0.25);
+  }
+  .insight.info .insight-icon { color: #4e8ac5; }
+
+  /* ===== POSITION STRIP ===== */
+  .position-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .position-card h3 {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+  .pos-strip-wrap {
+    position: relative;
+    height: 80px;
+  }
+  .pos-track {
+    position: absolute;
+    top: 28px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+  .pos-dot {
+    position: absolute;
+    top: 19px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--border-light);
+    transform: translateX(-50%);
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    z-index: 1;
+  }
+  .pos-dot:hover {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.6);
+    background: var(--text-secondary);
+    z-index: 3;
+  }
+  .pos-dot.current {
+    width: 18px;
+    height: 18px;
+    top: 16px;
+    background: var(--accent);
+    opacity: 1;
+    z-index: 2;
+    cursor: default;
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .pos-dot.current:hover { transform: translateX(-50%) scale(1); }
+  .pos-tip {
+    position: absolute;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 3px;
+    padding: 6px 10px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text);
+    pointer-events: none;
+    z-index: 10;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 0.12s;
+    bottom: 60px;
+    transform: translateX(-50%);
+  }
+  .pos-tip.visible { opacity: 1; }
+  .pos-marker-label {
+    position: absolute;
+    top: 44px;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .pos-national {
+    position: absolute;
+    top: 8px;
+    width: 2px;
+    height: 34px;
+    background: var(--danger);
+    opacity: 0.7;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+  .pos-national-label {
+    position: absolute;
+    top: -2px;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: var(--danger);
+    white-space: nowrap;
+    opacity: 0.8;
+  }
+  .pos-axis {
+    position: absolute;
+    top: 6px;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text-dim);
+  }
+  .pos-axis.pos-end { transform: translateX(0); right: 0; left: auto; }
+
+  /* ===== FUNNEL ===== */
+  .funnel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 20px 0 8px;
+  }
+  .funnel-bar {
+    border-radius: 4px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.15s;
+    min-width: 52px;
+    cursor: default;
+  }
+  .funnel-bar:hover { opacity: 0.85; }
+  .funnel-bar-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.92);
+    white-space: nowrap;
+  }
+  .funnel-bar-value {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .funnel-tooltip {
+    position: absolute;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 3px;
+    padding: 8px 12px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text);
+    pointer-events: none;
+    z-index: 10;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .funnel-tooltip.visible { opacity: 1; }
+  .funnel-tooltip .tt-pct { color: var(--text-secondary); margin-left: 4px; }
 
   /* ===== EMPTY STATE ===== */
   .empty-state {
@@ -394,6 +614,34 @@
   footer a { color: var(--text-secondary); text-decoration: none; transition: color 0.15s; }
   footer a:hover { color: var(--accent); }
 
+  /* ===== BREADCRUMB ===== */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .breadcrumb a {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.15s;
+    cursor: pointer;
+  }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb .sep {
+    font-size: 0.65rem;
+    color: var(--border-light);
+  }
+  .breadcrumb .current {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
     .container { padding: 24px 16px 60px; }
@@ -460,20 +708,28 @@
 
   <div id="results">
     <div class="selection-header">
+      <div class="breadcrumb" id="breadcrumb"></div>
       <h2 id="selTitle"></h2>
       <div class="sub" id="selSub"></div>
     </div>
 
     <div class="kpi-grid" id="kpiGrid"></div>
 
+    <div class="insights-panel" id="insightsPanel"></div>
+
+    <div class="position-card" id="positionCard">
+      <h3 id="posTitle">Positionnement IF</h3>
+      <div class="pos-strip-wrap" id="posStrip"></div>
+    </div>
+
     <div class="charts-row">
       <div class="chart-card">
         <h3>Causes d'accidents</h3>
-        <div class="chart-wrap" id="causesWrap" style="height:380px"><canvas id="causesChart"></canvas></div>
+        <div class="chart-wrap" id="causesWrap" style="height:320px"><canvas id="causesChart"></canvas></div>
       </div>
       <div class="chart-card">
-        <h3>Positionnement vs national</h3>
-        <div class="chart-wrap"><canvas id="gaugeChart"></canvas></div>
+        <h3>Cascade de severite</h3>
+        <div id="funnelWrap"></div>
       </div>
     </div>
 
@@ -499,7 +755,6 @@
   let currentCode = null;
   let currentLevel = 'naf5';
   let causesChart = null;
-  let gaugeChart = null;
   let compChart = null;
   let acIndex = -1;
 
@@ -548,7 +803,7 @@
   });
 
   searchInput.addEventListener('focus', function() {
-    if (!this.value) showAutocomplete('');
+    showAutocomplete(this.value);
   });
 
   searchInput.addEventListener('keydown', function(e) {
@@ -597,15 +852,19 @@
           return normalize(e.code).includes(q) || normalize(e.libelle).includes(q);
         })
         .sort((a, b) => {
-          // 1. Active level first
+          // 1. Exact match first
+          const aExact = a.code.toUpperCase() === qUp ? 0 : 1;
+          const bExact = b.code.toUpperCase() === qUp ? 0 : 1;
+          if (aExact !== bExact) return aExact - bExact;
+          // 2. Active level first
           const aLevel = a.level === currentLevel ? 0 : 1;
           const bLevel = b.level === currentLevel ? 0 : 1;
           if (aLevel !== bLevel) return aLevel - bLevel;
-          // 2. Code starts with query first
+          // 3. Code starts with query first
           const aStarts = a.code.toUpperCase().startsWith(qUp) ? 0 : 1;
           const bStarts = b.code.toUpperCase().startsWith(qUp) ? 0 : 1;
           if (aStarts !== bStarts) return aStarts - bStarts;
-          // 3. Sort by code
+          // 4. Sort by code
           return a.code.localeCompare(b.code);
         })
         .slice(0, 20);
@@ -700,6 +959,35 @@
     if (entry.codes_naf5) subText += ` // ${entry.codes_naf5.length} codes NAF5 agreg\u00E9s`;
     document.getElementById('selSub').textContent = subText;
 
+    // Breadcrumb: NAF2 > NAF4 > NAF5
+    const bc = document.getElementById('breadcrumb');
+    const crumbs = [];
+    const naf2code = code.substring(0, 2);
+    const naf4code = code.substring(0, 4);
+    const naf2entry = DATA.by_naf2[naf2code];
+    const naf4entry = DATA.by_naf4[naf4code];
+    if (level === 'naf5') {
+      if (naf2entry) crumbs.push({ code: naf2code, label: `${naf2code} ${naf2entry.libelle}`, level: 'naf2' });
+      if (naf4entry) crumbs.push({ code: naf4code, label: `${naf4code} ${naf4entry.libelle}`, level: 'naf4' });
+      crumbs.push({ label: `${code}`, current: true });
+    } else if (level === 'naf4') {
+      if (naf2entry) crumbs.push({ code: naf2code, label: `${naf2code} ${naf2entry.libelle}`, level: 'naf2' });
+      crumbs.push({ label: `${code}`, current: true });
+    } else {
+      crumbs.push({ label: `${code}`, current: true });
+    }
+    bc.innerHTML = crumbs.map((c, i) => {
+      const sep = i < crumbs.length - 1 ? '<span class="sep">&rsaquo;</span>' : '';
+      if (c.current) return `<span class="current">${c.label}</span>`;
+      return `<a data-code="${c.code}" data-level="${c.level}">${c.label}</a>${sep}`;
+    }).join('');
+    bc.querySelectorAll('a[data-code]').forEach(a => {
+      a.addEventListener('click', function() {
+        setLevel(this.dataset.level);
+        selectCode(this.dataset.code, this.dataset.level);
+      });
+    });
+
     // Compute AT ranking at current level
     const allAtLevel = Object.entries(getStore(level))
       .map(([k, v]) => ({ code: k, at: v.stats.at_1er_reglement }))
@@ -707,25 +995,12 @@
     const rank = allAtLevel.findIndex(e => e.code === code) + 1;
     const total = allAtLevel.length;
     const pctile = Math.round(rank / total * 100);
-    let rankLabel;
-    if (pctile <= 1) rankLabel = 'Top 1%';
-    else if (pctile <= 5) rankLabel = 'Top 5%';
-    else if (pctile <= 10) rankLabel = 'Top 10%';
-    else if (pctile <= 25) rankLabel = 'Top 25%';
-    else if (pctile <= 50) rankLabel = 'Top 50%';
-    else rankLabel = `${rank}e / ${total}`;
-    const rankBadge = `<span class="badge up">${rankLabel}</span>`;
+    const rankBadge = `<span class="badge neutral">#${rank}</span>`;
 
     const kpis = [
       { label: 'Accidents du travail', value: fmt(s.at_1er_reglement), badge: rankBadge },
       { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
       { label: 'Taux de gravite', value: fmt(s.taux_gravite), badge: badgeHTML(s.taux_gravite, nat.taux_gravite) },
-      { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
-      { label: 'Etablissements', value: fmt(s.nb_siret), badge: '' },
-      { label: 'Journees d\'IT', value: fmt(s.journees_it), badge: '' },
-      { label: 'AT avec arret 4j+', value: fmt(s.at_4j_arret), badge: '' },
-      { label: 'Nouvelles IP', value: fmt(s.nouvelles_ip), badge: '' },
-      { label: 'Deces', value: fmt(s.deces), badge: '' },
     ];
 
     document.getElementById('kpiGrid').innerHTML = kpis.map(k =>
@@ -736,8 +1011,10 @@
       </div>`
     ).join('');
 
+    renderInsights(s, nat, entry.risk_causes);
+    renderPositionStrip(code, level, s.indice_frequence);
     renderCausesChart(entry.risk_causes);
-    renderGaugeChart(s.indice_frequence, nat.indice_frequence);
+    renderFunnelChart(s);
     // Hide comparison at NAF2 level (no meaningful parent grouping)
     const compCard = document.querySelector('.comparison-card');
     if (level === 'naf2') {
@@ -750,119 +1027,236 @@
 
   // --- Charts ---
   const CAUSE_COLORS = [
-    '#d4a043','#c08b30','#ab7720','#e8bc6a',
-    '#f0d090','#8b6914','#b8963e','#d4b870',
-    '#a08040','#c0a050','#e0c878','#f5e0a0'
+    '#7c6ef0','#4e9af5','#3fb950','#e8bc6a',
+    '#e5534b','#d94fa0','#5bc0be','#f0883e'
   ];
+
+  function renderInsights(s, nat, causes) {
+    const insights = [];
+
+    // IF vs national
+    const ifRatio = s.indice_frequence / nat.indice_frequence;
+    if (ifRatio >= 3) {
+      insights.push({ level: 'danger', text: `Indice de frequence ${ifRatio.toFixed(1)}x la moyenne nationale` });
+    } else if (ifRatio >= 2) {
+      insights.push({ level: 'danger', text: `IF ${ifRatio.toFixed(1)}x au-dessus de la moyenne nationale` });
+    } else if (ifRatio >= 1.3) {
+      insights.push({ level: 'warn', text: `IF ${Math.round((ifRatio - 1) * 100)}% au-dessus de la moyenne nationale` });
+    } else if (ifRatio <= 0.5) {
+      insights.push({ level: 'info', text: `IF 2x en dessous de la moyenne nationale` });
+    }
+
+    // Taux de gravite vs national
+    const tgRatio = s.taux_gravite / nat.taux_gravite;
+    if (tgRatio >= 2) {
+      insights.push({ level: 'danger', text: `Gravite ${tgRatio.toFixed(1)}x la moyenne nationale` });
+    } else if (tgRatio >= 1.3) {
+      insights.push({ level: 'warn', text: `Gravite ${Math.round((tgRatio - 1) * 100)}% au-dessus de la moyenne` });
+    }
+
+    // IP rate
+    const ipRate = s.at_1er_reglement > 0 ? (s.nouvelles_ip / s.at_1er_reglement * 100) : 0;
+    if (ipRate >= 5) {
+      insights.push({ level: 'danger', text: `${ipRate.toFixed(1)}% des AT menent a une incapacite permanente` });
+    } else if (ipRate >= 3) {
+      insights.push({ level: 'warn', text: `${ipRate.toFixed(1)}% des AT menent a une incapacite permanente` });
+    }
+
+    // Deces
+    if (s.deces > 0) {
+      insights.push({ level: 'danger', text: `${s.deces} deces enregistre${s.deces > 1 ? 's' : ''} en 2023` });
+    }
+
+    // Dominant cause
+    const sorted = Object.entries(causes).filter(([,v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    if (sorted.length > 0 && sorted[0][1] >= 35) {
+      insights.push({ level: 'warn', text: `${sorted[0][0]} = ${sorted[0][1].toFixed(0)}% des accidents` });
+    }
+
+    // High volume
+    if (s.at_1er_reglement >= 10000) {
+      insights.push({ level: 'info', text: `${fmt(s.at_1er_reglement)} AT, secteur a fort volume` });
+    }
+
+    const icons = { danger: '\u26A0', warn: '\u25C9', info: '\u2139' };
+    document.getElementById('insightsPanel').innerHTML = insights.map(i =>
+      `<div class="insight ${i.level}"><span class="insight-icon">${icons[i.level]}</span>${i.text}</div>`
+    ).join('');
+  }
+
+  function renderPositionStrip(code, level, ifValue) {
+    const store = getStore(level);
+    const allIF = Object.entries(store)
+      .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }))
+      .filter(d => d.if_val > 0)
+      .sort((a, b) => a.if_val - b.if_val);
+
+    const maxIF = allIF[allIF.length - 1].if_val;
+    const levelLabel = level === 'naf5' ? 'NAF5' : level === 'naf4' ? 'NAF4' : 'NAF2';
+    document.getElementById('posTitle').textContent =
+      `Positionnement IF // ${allIF.length} codes ${levelLabel}`;
+
+    const strip = document.getElementById('posStrip');
+    let html = '<div class="pos-track"></div><div class="pos-tip" id="posTip"></div>';
+
+    // Peer dots
+    allIF.forEach((d, i) => {
+      const x = (d.if_val / maxIF * 96) + 2;
+      const isCurrent = d.code === code;
+      html += `<div class="pos-dot${isCurrent ? ' current' : ''}" style="left:${x}%" data-idx="${i}"></div>`;
+      if (isCurrent) {
+        html += `<div class="pos-marker-label" style="left:${x}%">IF ${ifValue.toFixed(1)}</div>`;
+      }
+    });
+
+    // National average marker
+    const natIF = DATA.meta.national.indice_frequence;
+    const natX = (natIF / maxIF * 96) + 2;
+    html += `<div class="pos-national" style="left:${natX}%"></div>`;
+    html += `<div class="pos-national-label" style="left:${natX}%">Moy. ${natIF.toFixed(1)}</div>`;
+
+    // Axis labels
+    const minIF = allIF[0].if_val;
+    html += `<div class="pos-axis" style="left:2%">${minIF.toFixed(0)}</div>`;
+    html += `<div class="pos-axis pos-end">${maxIF.toFixed(0)}</div>`;
+
+    strip.innerHTML = html;
+
+    // Tooltip + click
+    const tip = document.getElementById('posTip');
+    strip.querySelectorAll('.pos-dot:not(.current)').forEach(dot => {
+      const d = allIF[+dot.dataset.idx];
+      dot.addEventListener('mouseenter', function() {
+        const short = d.libelle.length > 30 ? d.libelle.substring(0, 30) + '...' : d.libelle;
+        tip.textContent = `${d.code}  ${short}  IF ${d.if_val.toFixed(1)}`;
+        tip.style.left = dot.style.left;
+        tip.classList.add('visible');
+      });
+      dot.addEventListener('mouseleave', function() {
+        tip.classList.remove('visible');
+      });
+      dot.addEventListener('click', function() {
+        tip.classList.remove('visible');
+        selectCode(d.code, level);
+      });
+    });
+  }
 
   function renderCausesChart(causes) {
     const sorted = Object.entries(causes)
       .filter(([,v]) => v > 0)
       .sort((a,b) => b[1] - a[1]);
 
-    const labels = sorted.map(([k]) => k);
-    const values = sorted.map(([,v]) => v);
+    // Show top 6, lump the rest into "Autres"
+    const MAX = 6;
+    let chartData;
+    if (sorted.length > MAX) {
+      const top = sorted.slice(0, MAX);
+      const rest = sorted.slice(MAX).reduce((sum, [,v]) => sum + v, 0);
+      chartData = [...top, ['Autres', rest]];
+    } else {
+      chartData = sorted;
+    }
+
+    const labels = chartData.map(([k]) => k);
+    const values = chartData.map(([,v]) => v);
 
     if (causesChart) causesChart.destroy();
     causesChart = new Chart(document.getElementById('causesChart'), {
-      type: 'bar',
+      type: 'doughnut',
       data: {
         labels,
         datasets: [{
           data: values,
           backgroundColor: CAUSE_COLORS.slice(0, values.length),
-          borderRadius: 1,
-          barThickness: 20,
+          borderColor: '#161b22',
+          borderWidth: 2,
         }]
       },
       options: {
-        indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
+        cutout: '55%',
         plugins: {
-          legend: { display: false },
+          legend: {
+            position: 'left',
+            align: 'center',
+            labels: {
+              padding: 10,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: { size: 11, family: "'DM Sans', sans-serif" },
+              color: '#8b949e',
+              generateLabels: function(chart) {
+                const data = chart.data;
+                return data.labels.map((label, i) => ({
+                  text: label + ' \u2013 ' + data.datasets[0].data[i].toFixed(0) + '%',
+                  fillStyle: data.datasets[0].backgroundColor[i],
+                  fontColor: '#8b949e',
+                  strokeStyle: 'transparent',
+                  pointStyle: 'circle',
+                  index: i,
+                  hidden: !chart.getDataVisibility(i),
+                }));
+              }
+            }
+          },
           tooltip: {
             backgroundColor: '#1c2128',
             borderColor: '#2d333b',
             borderWidth: 1,
             titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
             bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
-            callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(1)}%` }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            ticks: { callback: v => v + '%', font: { family: "'JetBrains Mono', monospace", size: 10 } },
-            grid: { color: 'rgba(45,51,59,0.5)' }
-          },
-          y: {
-            grid: { display: false },
-            ticks: { font: { size: 11 } }
+            callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toFixed(1)}%` }
           }
         }
-      }
+      },
+      plugins: []
     });
-    document.getElementById('causesWrap').style.height =
-      Math.max(200, sorted.length * 34 + 40) + 'px';
   }
 
-  function renderGaugeChart(secteurIF, nationalIF) {
-    if (gaugeChart) gaugeChart.destroy();
+  function renderFunnelChart(s) {
+    const items = [
+      { label: 'Deces',                    value: s.deces || 0,             color: '#c74a43' },
+      { label: 'Incapacites permanentes', value: s.nouvelles_ip || 0,      color: '#d4a043' },
+      { label: 'AT avec arret 4j+',       value: s.at_4j_arret || 0,      color: '#4e8ac5' },
+      { label: 'AT en 1er reglement',     value: s.at_1er_reglement || 0,  color: '#6a5ec8' },
+    ];
 
-    const maxIF = Math.max(secteurIF, nationalIF) * 1.5;
-    const isAbove = secteurIF > nationalIF;
+    const maxVal = items[items.length - 1].value || 1;
+    const wrap = document.getElementById('funnelWrap');
 
-    gaugeChart = new Chart(document.getElementById('gaugeChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Secteur', ''],
-        datasets: [{
-          data: [secteurIF, Math.max(0, maxIF - secteurIF)],
-          backgroundColor: [
-            isAbove ? '#e5534b' : '#3fb950',
-            '#2d333b'
-          ],
-          borderWidth: 0,
-          circumference: 180,
-          rotation: 270,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        aspectRatio: 1.4,
-        cutout: '78%',
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false }
-        }
-      },
-      plugins: [{
-        id: 'gaugeText',
-        afterDraw(chart) {
-          const { ctx, chartArea } = chart;
-          const cx = (chartArea.left + chartArea.right) / 2;
-          const cy = chartArea.top + (chartArea.bottom - chartArea.top) * 0.88;
+    const bars = items.map((d, i) => {
+      // Fixed tiers: each step visually distinct, numbers tell the data story
+      const tierWidths = [22, 46, 74, 100];
+      const pct = tierWidths[i] || 100;
+      const ofTotal = (d.value / maxVal * 100).toFixed(1);
+      return `<div class="funnel-bar" style="width:${pct}%;background:${d.color}" data-idx="${i}" data-pct="${ofTotal}">
+        <span class="funnel-bar-label">${d.label}</span>
+        <span class="funnel-bar-value">${fmt(d.value)}</span>
+      </div>`;
+    }).join('');
 
-          ctx.save();
-          ctx.textAlign = 'center';
+    wrap.style.position = 'relative';
+    wrap.innerHTML = `<div class="funnel">${bars}</div><div class="funnel-tooltip" id="funnelTip"></div>`;
 
-          ctx.font = "400 32px 'DM Serif Display', Georgia, serif";
-          ctx.fillStyle = isAbove ? '#e5534b' : '#3fb950';
-          ctx.fillText(secteurIF.toFixed(1), cx, cy - 14);
-
-          ctx.font = "500 10px 'JetBrains Mono', monospace";
-          ctx.fillStyle = '#545d68';
-          ctx.fillText('IF SECTEUR', cx, cy + 6);
-
-          ctx.font = "400 12px 'DM Sans', sans-serif";
-          ctx.fillStyle = '#8b949e';
-          ctx.fillText(`National : ${nationalIF.toFixed(1)}`, cx, cy + 26);
-
-          ctx.restore();
-        }
-      }]
+    const tip = document.getElementById('funnelTip');
+    wrap.querySelectorAll('.funnel-bar').forEach(bar => {
+      const i = +bar.dataset.idx;
+      const d = items[i];
+      const pctText = i === items.length - 1 ? '100% des AT' : bar.dataset.pct + '% des AT';
+      bar.addEventListener('mouseenter', function(e) {
+        tip.innerHTML = pctText;
+        tip.classList.add('visible');
+      });
+      bar.addEventListener('mousemove', function(e) {
+        const rect = wrap.getBoundingClientRect();
+        tip.style.left = (e.clientX - rect.left + 12) + 'px';
+        tip.style.top = (e.clientY - rect.top - 32) + 'px';
+      });
+      bar.addEventListener('mouseleave', function() {
+        tip.classList.remove('visible');
+      });
     });
   }
 
@@ -996,6 +1390,15 @@
         if (getStore(level)[code]) { setLevel(level); selectCode(code, level); return; }
       }
     });
+  });
+
+  // --- Keyboard shortcut: / to focus search ---
+  document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey && document.activeElement !== searchInput) {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+    }
   });
 
   window.addEventListener('hashchange', loadFromHash);
