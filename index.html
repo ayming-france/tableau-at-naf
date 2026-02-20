@@ -321,54 +321,63 @@
 
   /* ===== EMPTY STATE ===== */
   .empty-state {
-    text-align: center;
-    padding: 100px 20px;
-    color: var(--text-dim);
+    padding: 64px 0;
   }
-  .empty-state .prompt-hint {
-    font-family: var(--mono);
-    font-size: 0.82rem;
-    color: var(--text-dim);
-    border: 1px dashed var(--border);
-    display: inline-block;
-    padding: 12px 24px;
-    margin-top: 12px;
+  .empty-inner {
+    max-width: 600px;
+    margin: 0 auto;
   }
-  .empty-state .prompt-hint span { color: var(--accent); }
-  .naf-explainer {
-    margin-top: 32px;
-    display: inline-flex;
-    flex-direction: column;
-    gap: 8px;
-    text-align: left;
-  }
-  .naf-level {
+  .empty-lead {
     font-family: var(--sans);
-    font-size: 0.82rem;
+    font-size: 0.95rem;
+    font-weight: 300;
     color: var(--text-secondary);
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 40px;
   }
-  .naf-level strong {
+  .naf-table {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+  }
+  .naf-row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .naf-row:last-child { border-bottom: none; }
+  .naf-row:hover { background: var(--accent-glow); }
+  .naf-badge {
     font-family: var(--mono);
     font-size: 0.72rem;
     font-weight: 600;
+    letter-spacing: 0.04em;
     color: var(--accent);
-    min-width: 42px;
-    letter-spacing: 0.03em;
   }
-  .naf-level .naf-ex {
-    color: var(--text-dim);
-    font-size: 0.78rem;
-    margin-left: auto;
-    padding-left: 16px;
-  }
-  .empty-state p {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 1.15rem;
+  .naf-desc {
+    font-size: 0.84rem;
     color: var(--text-secondary);
+  }
+  .naf-example {
+    font-family: var(--mono);
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text);
+    text-align: right;
+  }
+  .naf-label {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* ===== FOOTER ===== */
@@ -424,12 +433,28 @@
   </div>
 
   <div class="empty-state" id="emptyState">
-    <p>Recherchez un secteur d'activite</p>
-    <div class="prompt-hint"><span>4711D</span> supermarche &middot; <span>4120</span> construction &middot; <span>86</span> sante</div>
-    <div class="naf-explainer">
-      <div class="naf-level"><strong>NAF5</strong> Code activite precis <span class="naf-ex">4711D = Supermarches</span></div>
-      <div class="naf-level"><strong>NAF4</strong> Sous-classe, regroupe les variantes <span class="naf-ex">4711 = Commerce d'alimentation generale</span></div>
-      <div class="naf-level"><strong>NAF2</strong> Division sectorielle large <span class="naf-ex">47 = Commerce de detail</span></div>
+    <div class="empty-inner">
+      <p class="empty-lead">Tapez un code NAF ou un mot-cle pour explorer<br>la sinistralite d'un secteur d'activite.</p>
+      <div class="naf-table">
+        <div class="naf-row">
+          <span class="naf-badge">NAF5</span>
+          <span class="naf-desc">Activite precise</span>
+          <span class="naf-example" data-code="4711D">4711D</span>
+          <span class="naf-label">Supermarches</span>
+        </div>
+        <div class="naf-row">
+          <span class="naf-badge">NAF4</span>
+          <span class="naf-desc">Sous-classe agregee</span>
+          <span class="naf-example" data-code="4711">4711</span>
+          <span class="naf-label">Commerce d'alimentation generale</span>
+        </div>
+        <div class="naf-row">
+          <span class="naf-badge">NAF2</span>
+          <span class="naf-desc">Division sectorielle</span>
+          <span class="naf-example" data-code="47">47</span>
+          <span class="naf-label">Commerce de detail</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -892,6 +917,27 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
       }
     }
   }
+
+  // --- Clickable examples in empty state ---
+  document.querySelectorAll('.naf-row[data-code],.naf-example[data-code]').forEach(el => {
+    el.addEventListener('click', function() {
+      const code = (this.closest('.naf-row') || this).querySelector('.naf-example')?.dataset.code || this.dataset.code;
+      if (!code) return;
+      for (const level of ['naf5', 'naf4', 'naf2']) {
+        if (getStore(level)[code]) { setLevel(level); selectCode(code, level); return; }
+      }
+    });
+  });
+  // Make entire row clickable
+  document.querySelectorAll('.naf-row').forEach(row => {
+    const ex = row.querySelector('.naf-example');
+    if (ex) row.addEventListener('click', () => {
+      const code = ex.dataset.code;
+      for (const level of ['naf5', 'naf4', 'naf2']) {
+        if (getStore(level)[code]) { setLevel(level); selectCode(code, level); return; }
+      }
+    });
+  });
 
   window.addEventListener('hashchange', loadFromHash);
   loadFromHash();
