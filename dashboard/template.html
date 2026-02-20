@@ -338,7 +338,7 @@
       </div>
       <div class="chart-card">
         <h3>Positionnement vs national</h3>
-        <div class="chart-wrap" style="height:260px"><canvas id="gaugeChart"></canvas></div>
+        <div class="chart-wrap"><canvas id="gaugeChart"></canvas></div>
       </div>
     </div>
 
@@ -639,6 +639,7 @@
       options: {
         responsive: true,
         maintainAspectRatio: true,
+        aspectRatio: 1.8,
         cutout: '75%',
         plugins: {
           legend: { display: false },
@@ -650,7 +651,7 @@
         afterDraw(chart) {
           const { ctx, chartArea } = chart;
           const cx = (chartArea.left + chartArea.right) / 2;
-          const cy = chartArea.bottom - 20;
+          const cy = chartArea.top + (chartArea.bottom - chartArea.top) * 0.92;
 
           ctx.save();
           ctx.textAlign = 'center';
