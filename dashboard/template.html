@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
   :root {
     --bg: #0f1419;
@@ -108,24 +109,33 @@
   .search-wrapper {
     flex: 1;
     position: relative;
-  }
-  .search-wrapper input {
-    width: 100%;
-    padding: 14px 16px 14px 44px;
+    display: flex;
+    align-items: center;
     border: 1px solid var(--border);
     border-radius: 2px;
+    background: var(--bg-elevated);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-wrapper:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .search-wrapper input {
+    flex: 1;
+    min-width: 0;
+    padding: 14px 16px 14px 44px;
+    border: none;
+    background: transparent;
     font-family: var(--mono);
     font-size: 0.88rem;
     font-weight: 400;
-    background: var(--bg-elevated);
     color: var(--text);
-    transition: border-color 0.2s, box-shadow 0.2s;
     outline: none;
   }
   .search-wrapper input::placeholder { color: var(--text-dim); }
   .search-wrapper input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
+    border-color: transparent;
+    box-shadow: none;
   }
   .search-wrapper .icon {
     position: absolute;
@@ -195,13 +205,13 @@
     flex-shrink: 0;
   }
 
-  /* Level tabs */
-  .level-tabs { display: flex; gap: 2px; }
+  /* Level tabs (embedded in search-wrapper) */
+  .level-tabs { display: flex; gap: 2px; padding-right: 6px; flex-shrink: 0; }
   .level-tabs button {
-    padding: 14px 20px;
-    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border: none;
     border-radius: 2px;
-    background: var(--bg-elevated);
+    background: transparent;
     font-family: var(--mono);
     font-size: 0.78rem;
     font-weight: 500;
@@ -210,11 +220,10 @@
     transition: all 0.15s;
     color: var(--text-dim);
   }
-  .level-tabs button:hover { color: var(--text-secondary); border-color: var(--border-light); }
+  .level-tabs button:hover { color: var(--text-secondary); background: rgba(255,255,255,0.04); }
   .level-tabs button.active {
     background: var(--accent);
     color: var(--bg);
-    border-color: var(--accent);
     font-weight: 600;
   }
 
@@ -330,27 +339,244 @@
     margin-bottom: 20px;
   }
 
-  /* ===== INSIGHTS ===== */
-  .insights-panel {
+  /* ===== ACTION ICONS ===== */
+  .action-icons { display: flex; gap: 2px; }
+  .action-btn {
+    width: 44px;
+    height: 44px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 24px;
-  }
-  .insights-panel:empty { display: none; }
-  .insight {
-    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--bg-elevated);
+    color: var(--text-dim);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .action-btn svg { width: 18px; height: 18px; }
+  .action-btn:hover { color: var(--text-secondary); border-color: var(--border-light); }
+  .action-btn.active {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .notif-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    display: none;
+  }
+  .notif-badge.visible { display: block; }
+  .action-btn.has-insights svg {
+    color: var(--accent);
+    filter: drop-shadow(0 0 0px transparent);
+    animation: iconGlow 0.7s ease-in-out 3;
+  }
+  @keyframes iconGlow {
+    0%, 100% { filter: drop-shadow(0 0 0px transparent); }
+    50% { filter: drop-shadow(0 0 6px rgba(212,160,67,0.7)); }
+  }
+
+  /* Action button tooltips (matches funnel-tooltip style) */
+  .action-btn::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
     border-radius: 3px;
-    font-size: 0.8rem;
-    line-height: 1.3;
+    padding: 6px 10px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text);
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 10;
+  }
+  .action-btn:hover::after { opacity: 1; }
+
+  /* ===== INSIGHTS DRAWER ===== */
+  .insights-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 360px;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border);
+    z-index: 200;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 24px rgba(0,0,0,0.3);
+  }
+  .insights-drawer.open { transform: translateX(0); }
+  .insights-drawer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .insights-drawer-header .drawer-icon {
+    color: var(--accent);
+    display: flex;
+  }
+  .insights-drawer-header .drawer-icon svg { width: 18px; height: 18px; }
+  .insights-drawer-header h3 {
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+  .insights-drawer-header .close-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .insights-drawer-header .close-btn:hover { color: var(--text); }
+  .insights-drawer-sub {
+    padding: 12px 20px;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .insights-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .insights-drawer-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  /* ===== SHARE DRAWER ===== */
+  .share-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 360px;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border);
+    z-index: 200;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 24px rgba(0,0,0,0.3);
+  }
+  .share-drawer.open { transform: translateX(0); }
+  .share-drawer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .share-drawer-header .drawer-icon {
+    color: var(--accent);
+    display: flex;
+  }
+  .share-drawer-header .drawer-icon svg { width: 18px; height: 18px; }
+  .share-drawer-header h3 {
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+  .share-drawer-header .close-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .share-drawer-header .close-btn:hover { color: var(--text); }
+  .share-drawer-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .share-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+    font-family: var(--sans);
+  }
+  .share-option:hover { background: var(--bg-elevated); }
+  .share-option-icon { font-size: 1.1rem; color: var(--text-dim); width: 28px; text-align: center; }
+  .share-option-label { flex: 1; text-align: left; font-size: 0.88rem; }
+  .share-option-arrow { color: var(--text-dim); font-size: 1.1rem; }
+
+  /* Insight items (reused, stacked full-width) */
+  .insight {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    line-height: 1.45;
     color: var(--text);
   }
   .insight .insight-icon {
     font-size: 0.9rem;
     flex-shrink: 0;
+    margin-top: 1px;
   }
   .insight.warn {
     background: rgba(212,160,67,0.1);
@@ -646,9 +872,12 @@
   @media (max-width: 768px) {
     .container { padding: 24px 16px 60px; }
     header h1 { font-size: 1.65rem; }
-    .search-row { flex-direction: column; }
-    .level-tabs { justify-content: stretch; }
-    .level-tabs button { flex: 1; text-align: center; }
+    .search-row { flex-wrap: wrap; }
+    .search-wrapper { flex: 1 1 100%; }
+    .action-icons { flex: 0 0 auto; }
+    .level-tabs button { padding: 8px 10px; font-size: 0.72rem; }
+    .insights-drawer { width: 100%; }
+    .share-drawer { width: 100%; }
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-row { grid-template-columns: 1fr; }
     .kpi-card .value { font-size: 1.5rem; }
@@ -670,12 +899,16 @@
       <div class="search-wrapper">
         <span class="icon">/</span>
         <input type="text" id="searchInput" placeholder="code NAF ou activite..." autocomplete="off">
+        <div class="level-tabs" id="levelTabs">
+          <button data-level="naf5" class="active">NAF</button>
+          <button data-level="naf4">NAF4</button>
+          <button data-level="naf2">NAF2</button>
+        </div>
         <div class="autocomplete" id="autocomplete"></div>
       </div>
-      <div class="level-tabs" id="levelTabs">
-        <button data-level="naf5" class="active">NAF5</button>
-        <button data-level="naf4">NAF4</button>
-        <button data-level="naf2">NAF2</button>
+      <div class="action-icons" id="actionIcons">
+        <button class="action-btn" id="shareBtn" data-tip="Partager" onclick="toggleShare()"><i data-lucide="share-2"></i></button>
+        <button class="action-btn" id="insightsBtn" data-tip="Insights" onclick="toggleInsights()"><i data-lucide="sparkles"></i><span class="notif-badge" id="insightsBadge"></span></button>
       </div>
     </div>
   </div>
@@ -685,7 +918,7 @@
       <p class="empty-lead">Tapez un code NAF ou un mot-cle pour explorer<br>la sinistralite d'un secteur d'activite.</p>
       <div class="naf-table">
         <div class="naf-row">
-          <span class="naf-badge">NAF5</span>
+          <span class="naf-badge">NAF</span>
           <span class="naf-desc">Activite precise</span>
           <span class="naf-example" data-code="4711D">4711D</span>
           <span class="naf-label">Supermarches</span>
@@ -715,8 +948,6 @@
 
     <div class="kpi-grid" id="kpiGrid"></div>
 
-    <div class="insights-panel" id="insightsPanel"></div>
-
     <div class="position-card" id="positionCard">
       <h3 id="posTitle">Positionnement IF</h3>
       <div class="pos-strip-wrap" id="posStrip"></div>
@@ -733,15 +964,47 @@
       </div>
     </div>
 
-    <div class="comparison-card">
+    <div class="comparison-card" id="compCard">
       <h3 id="compTitle">Comparaison</h3>
       <div class="chart-wrap" id="compWrap" style="height:360px"><canvas id="compChart"></canvas></div>
     </div>
   </div>
 
+  <div class="insights-drawer" id="insightsDrawer">
+    <div class="insights-drawer-header">
+      <span class="drawer-icon"><i data-lucide="sparkles"></i></span>
+      <h3>Insights</h3>
+      <button class="close-btn" onclick="toggleInsights()" title="Fermer">&times;</button>
+    </div>
+    <div class="insights-drawer-sub" id="drawerSub">Selectionnez un secteur</div>
+    <div class="insights-drawer-body" id="drawerBody">
+      <div class="insights-drawer-empty">Selectionnez un secteur pour<br>afficher les insights.</div>
+    </div>
+  </div>
+
+  <div class="share-drawer" id="shareDrawer">
+    <div class="share-drawer-header">
+      <span class="drawer-icon"><i data-lucide="share-2"></i></span>
+      <h3>Partager</h3>
+      <button class="close-btn" onclick="toggleShare()" title="Fermer">&times;</button>
+    </div>
+    <div class="share-drawer-body">
+      <button class="share-option" onclick="copyLink()">
+        <span class="share-option-icon">&#x1F517;</span>
+        <span class="share-option-label">Copier le lien</span>
+        <span class="share-option-arrow">&#x203A;</span>
+      </button>
+      <button class="share-option" onclick="downloadPDF()">
+        <span class="share-option-icon">&#x2193;</span>
+        <span class="share-option-label">Telecharger PDF</span>
+        <span class="share-option-arrow">&#x203A;</span>
+      </button>
+    </div>
+  </div>
+
   <footer>
     <span>Source : <a href="https://assurance-maladie.ameli.fr/etudes-et-donnees/risque-at-ctn-x-naf-serie-annuelle" target="_blank">Ameli, Risque AT par CTN x NAF 2023</a></span>
-    <span>729 codes NAF5 &middot; 89 divisions</span>
+    <span>729 codes NAF &middot; 89 divisions</span>
   </footer>
 </div>
 
@@ -956,7 +1219,7 @@
     document.getElementById('selTitle').textContent = `${code} \u2014 ${entry.libelle}`;
     const levelLabel = level === 'naf5' ? 'Code NAF' : level === 'naf4' ? 'Sous-classe NAF' : 'Division NAF';
     let subText = levelLabel;
-    if (entry.codes_naf5) subText += ` // ${entry.codes_naf5.length} codes NAF5 agreg\u00E9s`;
+    if (entry.codes_naf5) subText += ` // ${entry.codes_naf5.length} codes NAF agreg\u00E9s`;
     document.getElementById('selSub').textContent = subText;
 
     // Breadcrumb: NAF2 > NAF4 > NAF5
@@ -1015,14 +1278,7 @@
     renderPositionStrip(code, level, s.indice_frequence);
     renderCausesChart(entry.risk_causes);
     renderFunnelChart(s);
-    // Hide comparison at NAF2 level (no meaningful parent grouping)
-    const compCard = document.querySelector('.comparison-card');
-    if (level === 'naf2') {
-      compCard.style.display = 'none';
-    } else {
-      compCard.style.display = '';
-      renderComparisonChart(code, level);
-    }
+    renderComparisonChart(code, level);
   }
 
   // --- Charts ---
@@ -1078,11 +1334,76 @@
       insights.push({ level: 'info', text: `${fmt(s.at_1er_reglement)} AT, secteur a fort volume` });
     }
 
+    // Highlight insights button when there are insights
+    const insBtn = document.getElementById('insightsBtn');
+    const badge = document.getElementById('insightsBadge');
+    insBtn.classList.remove('has-insights');
+    badge.classList.remove('visible');
+    if (insights.length > 0) {
+      badge.textContent = insights.length;
+      badge.classList.add('visible');
+      void insBtn.offsetWidth;
+      insBtn.classList.add('has-insights');
+    }
+
+    // Update drawer subtitle
+    const store = getStore(currentLevel);
+    const entry = store[currentCode];
+    if (entry) {
+      document.getElementById('drawerSub').textContent = `${currentCode} \u2014 ${entry.libelle}`;
+    }
+
+    // Populate drawer body
+    const body = document.getElementById('drawerBody');
     const icons = { danger: '\u26A0', warn: '\u25C9', info: '\u2139' };
-    document.getElementById('insightsPanel').innerHTML = insights.map(i =>
-      `<div class="insight ${i.level}"><span class="insight-icon">${icons[i.level]}</span>${i.text}</div>`
-    ).join('');
+    if (insights.length === 0) {
+      body.innerHTML = '<div class="insights-drawer-empty">Aucun insight pour ce secteur.</div>';
+    } else {
+      body.innerHTML = insights.map(i =>
+        `<div class="insight ${i.level}"><span class="insight-icon">${icons[i.level]}</span>${i.text}</div>`
+      ).join('');
+    }
   }
+
+  window.toggleInsights = function() {
+    // Close share drawer if open
+    const shareDrawer = document.getElementById('shareDrawer');
+    if (shareDrawer.classList.contains('open')) {
+      shareDrawer.classList.remove('open');
+      document.getElementById('shareBtn').classList.remove('active');
+    }
+    const drawer = document.getElementById('insightsDrawer');
+    const btn = document.getElementById('insightsBtn');
+    const isOpen = drawer.classList.toggle('open');
+    btn.classList.toggle('active', isOpen);
+  };
+
+  window.toggleShare = function() {
+    // Close insights drawer if open
+    const insightsDrawer = document.getElementById('insightsDrawer');
+    if (insightsDrawer.classList.contains('open')) {
+      insightsDrawer.classList.remove('open');
+      document.getElementById('insightsBtn').classList.remove('active');
+    }
+    const drawer = document.getElementById('shareDrawer');
+    const btn = document.getElementById('shareBtn');
+    const isOpen = drawer.classList.toggle('open');
+    btn.classList.toggle('active', isOpen);
+  };
+
+
+  window.copyLink = function() {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+      const label = document.querySelector('#shareDrawer .share-option:first-child .share-option-label');
+      const original = label.textContent;
+      label.textContent = 'Copie !';
+      setTimeout(function() { label.textContent = original; }, 2000);
+    });
+  };
+
+  window.downloadPDF = function() {
+    window.print();
+  };
 
   function renderPositionStrip(code, level, ifValue) {
     const store = getStore(level);
@@ -1092,7 +1413,7 @@
       .sort((a, b) => a.if_val - b.if_val);
 
     const maxIF = allIF[allIF.length - 1].if_val;
-    const levelLabel = level === 'naf5' ? 'NAF5' : level === 'naf4' ? 'NAF4' : 'NAF2';
+    const levelLabel = level === 'naf5' ? 'NAF' : level === 'naf4' ? 'NAF4' : 'NAF2';
     document.getElementById('posTitle').textContent =
       `Positionnement IF // ${allIF.length} codes ${levelLabel}`;
 
@@ -1265,24 +1586,24 @@
     const store = getStore(level);
 
     if (level === 'naf5') {
-      const naf4 = code.substring(0, 4);
+      const naf2 = code.substring(0, 2);
       siblings = Object.entries(store)
-        .filter(([k]) => k.startsWith(naf4))
+        .filter(([k]) => k.startsWith(naf2))
         .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
       document.getElementById('compTitle').textContent =
-        `Comparaison NAF5 // ${naf4}`;
+        `Comparaison // division ${naf2}`;
     } else if (level === 'naf4') {
       const naf2 = code.substring(0, 2);
       siblings = Object.entries(store)
-        .filter(([k, v]) => v.naf2 === naf2)
+        .filter(([k]) => k.startsWith(naf2))
         .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
       document.getElementById('compTitle').textContent =
-        `Comparaison NAF4 // division ${naf2}`;
+        `Comparaison // division ${naf2}`;
     } else {
       siblings = Object.entries(store)
         .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
       document.getElementById('compTitle').textContent =
-        `Comparaison NAF2 // toutes divisions`;
+        `Comparaison // toutes divisions`;
     }
 
     siblings.sort((a, b) => b.if_val - a.if_val);
@@ -1297,8 +1618,11 @@
     const colors = top.map(s => s.code === code ? '#d4a043' : '#2d333b');
     const borderColors = top.map(s => s.code === code ? '#d4a043' : '#373e47');
 
+    const canvas = document.getElementById('compChart');
+    canvas.style.cursor = 'pointer';
+
     if (compChart) compChart.destroy();
-    compChart = new Chart(document.getElementById('compChart'), {
+    compChart = new Chart(canvas, {
       type: 'bar',
       data: {
         labels,
@@ -1315,6 +1639,15 @@
         indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
+        onClick: function(evt, elements) {
+          if (elements.length > 0) {
+            const idx = elements[0].index;
+            const target = top[idx];
+            if (target && target.code !== code) {
+              selectCode(target.code, level);
+            }
+          }
+        },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -1394,6 +1727,18 @@
 
   // --- Keyboard shortcut: / to focus search ---
   document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const insightsDrawer = document.getElementById('insightsDrawer');
+      if (insightsDrawer.classList.contains('open')) {
+        toggleInsights();
+        return;
+      }
+      const shareDrawer = document.getElementById('shareDrawer');
+      if (shareDrawer.classList.contains('open')) {
+        toggleShare();
+        return;
+      }
+    }
     if (e.key === '/' && !e.ctrlKey && !e.metaKey && document.activeElement !== searchInput) {
       e.preventDefault();
       searchInput.focus();
@@ -1403,6 +1748,8 @@
 
   window.addEventListener('hashchange', loadFromHash);
   loadFromHash();
+
+  lucide.createIcons();
 
 })();
 </script>
