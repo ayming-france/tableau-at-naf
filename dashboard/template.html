@@ -701,11 +701,14 @@
     document.getElementById('selSub').textContent = subText;
 
     const kpis = [
-      { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
+      { label: 'Accidents du travail', value: fmt(s.at_1er_reglement), badge: '' },
       { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
       { label: 'Taux de gravite', value: fmt(s.taux_gravite), badge: badgeHTML(s.taux_gravite, nat.taux_gravite) },
+      { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
+      { label: 'Etablissements', value: fmt(s.nb_siret), badge: '' },
       { label: 'Journees d\'IT', value: fmt(s.journees_it), badge: '' },
       { label: 'AT avec arret 4j+', value: fmt(s.at_4j_arret), badge: '' },
+      { label: 'Nouvelles IP', value: fmt(s.nouvelles_ip), badge: '' },
       { label: 'Deces', value: fmt(s.deces), badge: '' },
     ];
 
