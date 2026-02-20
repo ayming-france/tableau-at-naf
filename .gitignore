@@ -1,0 +1,6 @@
+data/at-by-ctn-naf.xlsx
+data/at-data.pkl
+data/at-data.json
+__pycache__/
+*.pyc
+.DS_Store

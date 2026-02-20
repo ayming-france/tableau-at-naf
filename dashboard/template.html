@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accidents du Travail par Secteur</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f8f9fb;
+    --surface: #ffffff;
+    --text: #1a1a2e;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --accent: #3b5bdb;
+    --accent-light: #eef2ff;
+    --positive: #059669;
+    --positive-bg: #ecfdf5;
+    --negative: #dc2626;
+    --negative-bg: #fef2f2;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  /* Search */
+  .search-section {
+    margin-bottom: 28px;
+  }
+  .search-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .search-wrapper {
+    flex: 1;
+    position: relative;
+  }
+  .search-wrapper input {
+    width: 100%;
+    padding: 12px 16px 12px 42px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    background: var(--surface);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .search-wrapper input:focus { border-color: var(--accent); }
+  .search-wrapper .icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    pointer-events: none;
+  }
+
+  /* Autocomplete */
+  .autocomplete {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    max-height: 320px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+  }
+  .autocomplete.open { display: block; }
+  .ac-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover, .ac-item.active { background: var(--accent-light); }
+  .ac-item .code {
+    font-weight: 600;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 0.9rem;
+  }
+  .ac-item .libelle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-left: 12px;
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ac-item .level-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--accent-light);
+    color: var(--accent);
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Level tabs */
+  .level-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .level-tabs button {
+    padding: 10px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-muted);
+  }
+  .level-tabs button:hover { border-color: var(--accent); color: var(--accent); }
+  .level-tabs button.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  /* Results panel (hidden until search) */
+  #results { display: none; }
+  #results.visible { display: block; }
+
+  /* Current selection header */
+  .selection-header {
+    margin-bottom: 20px;
+  }
+  .selection-header h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+  .selection-header .sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 2px;
+  }
+
+  /* KPI cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .kpi-card .label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .kpi-card .value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .kpi-card .badge {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .badge.up { background: var(--negative-bg); color: var(--negative); }
+  .badge.down { background: var(--positive-bg); color: var(--positive); }
+  .badge.neutral { background: #f3f4f6; color: var(--text-muted); }
+
+  /* Charts row */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .chart-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .chart-card h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .chart-card .chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .chart-card .chart-wrap canvas {
+    width: 100% !important;
+  }
+
+  /* Comparison section */
+  .comparison-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .comparison-card h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .icon-big { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 1.05rem; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 24px 0 0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    border-top: 1px solid var(--border);
+    margin-top: 32px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .charts-row { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    header h1 { font-size: 1.35rem; }
+    .search-row { flex-direction: column; }
+    .level-tabs { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Accidents du Travail par Secteur</h1>
+    <p>Donnees Ameli 2023 &middot; Statistiques AT par code NAF</p>
+  </header>
+
+  <div class="search-section">
+    <div class="search-row">
+      <div class="search-wrapper">
+        <span class="icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Code NAF ou activite (ex: 4711D, supermarche, BTP...)" autocomplete="off">
+        <div class="autocomplete" id="autocomplete"></div>
+      </div>
+      <div class="level-tabs" id="levelTabs">
+        <button data-level="naf5" class="active">NAF5</button>
+        <button data-level="naf4">NAF4</button>
+        <button data-level="naf2">NAF2</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" id="emptyState">
+    <div class="icon-big">&#128202;</div>
+    <p>Recherchez un code NAF pour afficher les statistiques AT</p>
+  </div>
+
+  <div id="results">
+    <div class="selection-header">
+      <h2 id="selTitle"></h2>
+      <div class="sub" id="selSub"></div>
+    </div>
+
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>Causes d'accidents</h3>
+        <div class="chart-wrap" id="causesWrap" style="height:380px"><canvas id="causesChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Positionnement vs national</h3>
+        <div class="chart-wrap" style="height:260px"><canvas id="gaugeChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="comparison-card">
+      <h3 id="compTitle">Comparaison</h3>
+      <div class="chart-wrap" id="compWrap" style="height:360px"><canvas id="compChart"></canvas></div>
+    </div>
+  </div>
+
+  <footer>
+    Source : <a href="https://assurance-maladie.ameli.fr/etudes-et-donnees/risque-at-ctn-x-naf-serie-annuelle" target="_blank">Ameli Open Data</a> &middot; Risque AT par CTN x NAF 2023
+  </footer>
+</div>
+
+<script>
+/* __AT_DATA_INJECTION__ */
+
+(function() {
+  'use strict';
+
+  // --- State ---
+  let currentCode = null;
+  let currentLevel = 'naf5';
+  let causesChart = null;
+  let gaugeChart = null;
+  let compChart = null;
+  let acIndex = -1; // autocomplete active index
+
+  // --- Elements ---
+  const searchInput = document.getElementById('searchInput');
+  const acBox = document.getElementById('autocomplete');
+  const resultsDiv = document.getElementById('results');
+  const emptyState = document.getElementById('emptyState');
+  const levelTabs = document.getElementById('levelTabs');
+
+  // --- Helpers ---
+  function fmt(n) {
+    if (n === undefined || n === null) return '-';
+    return n.toLocaleString('fr-FR');
+  }
+
+  function badgeHTML(secteur, national, invert) {
+    if (!national || national === 0) return '';
+    const pct = ((secteur - national) / national * 100);
+    const sign = pct >= 0 ? '+' : '';
+    // For accidents: higher = worse (up=red), unless inverted
+    let cls = pct > 5 ? 'up' : pct < -5 ? 'down' : 'neutral';
+    if (invert) cls = cls === 'up' ? 'down' : cls === 'down' ? 'up' : 'neutral';
+    return `<span class="badge ${cls}">${sign}${pct.toFixed(0)}% vs national</span>`;
+  }
+
+  function getStore(level) {
+    return DATA['by_' + level];
+  }
+
+  function normalize(str) {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  // --- Search & Autocomplete ---
+  let debounceTimer;
+  searchInput.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => showAutocomplete(this.value), 120);
+  });
+
+  searchInput.addEventListener('keydown', function(e) {
+    const items = acBox.querySelectorAll('.ac-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      acIndex = Math.min(acIndex + 1, items.length - 1);
+      updateAcActive(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      acIndex = Math.max(acIndex - 1, 0);
+      updateAcActive(items);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (acIndex >= 0 && items[acIndex]) {
+        items[acIndex].click();
+      }
+    } else if (e.key === 'Escape') {
+      closeAc();
+    }
+  });
+
+  function updateAcActive(items) {
+    items.forEach((el, i) => el.classList.toggle('active', i === acIndex));
+    if (items[acIndex]) items[acIndex].scrollIntoView({ block: 'nearest' });
+  }
+
+  function showAutocomplete(query) {
+    if (!query || query.length < 1) { closeAc(); return; }
+    const q = normalize(query);
+    const matches = DATA.naf_index.filter(e =>
+      normalize(e.code).includes(q) || normalize(e.libelle).includes(q)
+    ).slice(0, 15);
+
+    if (matches.length === 0) { closeAc(); return; }
+
+    acBox.innerHTML = matches.map(m =>
+      `<div class="ac-item" data-code="${m.code}" data-level="${m.level}">
+        <span class="code">${m.code}</span>
+        <span class="libelle">${m.libelle}</span>
+        <span class="level-tag">${m.level.toUpperCase()}</span>
+      </div>`
+    ).join('');
+
+    acBox.querySelectorAll('.ac-item').forEach(el => {
+      el.addEventListener('click', function() {
+        const code = this.dataset.code;
+        const level = this.dataset.level;
+        setLevel(level);
+        selectCode(code, level);
+        closeAc();
+      });
+    });
+
+    acIndex = -1;
+    acBox.classList.add('open');
+  }
+
+  function closeAc() {
+    acBox.classList.remove('open');
+    acIndex = -1;
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.search-wrapper')) closeAc();
+  });
+
+  // --- Level tabs ---
+  levelTabs.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', function() {
+      setLevel(this.dataset.level);
+      if (currentCode) {
+        // Try to find equivalent code at new level
+        const newCode = adaptCode(currentCode, currentLevel);
+        if (newCode) selectCode(newCode, currentLevel);
+      }
+    });
+  });
+
+  function setLevel(level) {
+    currentLevel = level;
+    levelTabs.querySelectorAll('button').forEach(b =>
+      b.classList.toggle('active', b.dataset.level === level)
+    );
+  }
+
+  function adaptCode(code, targetLevel) {
+    const store = getStore(targetLevel);
+    // Direct match
+    if (store[code]) return code;
+    // Try prefix/suffix adaptation
+    if (targetLevel === 'naf4') return store[code.substring(0, 4)] ? code.substring(0, 4) : null;
+    if (targetLevel === 'naf2') return store[code.substring(0, 2)] ? code.substring(0, 2) : null;
+    if (targetLevel === 'naf5') {
+      // Find first naf5 code starting with this prefix
+      const prefix = code;
+      const match = Object.keys(store).find(k => k.startsWith(prefix));
+      return match || null;
+    }
+    return null;
+  }
+
+  // --- Select & Render ---
+  function selectCode(code, level) {
+    currentCode = code;
+    currentLevel = level;
+    searchInput.value = code;
+    window.location.hash = code;
+    render(code, level);
+  }
+
+  function render(code, level) {
+    const store = getStore(level);
+    const entry = store[code];
+    if (!entry) return;
+
+    emptyState.style.display = 'none';
+    resultsDiv.classList.add('visible');
+
+    const s = entry.stats;
+    const nat = DATA.meta.national;
+
+    // Title
+    document.getElementById('selTitle').textContent = `${code} \u2014 ${entry.libelle}`;
+    const levelLabel = level === 'naf5' ? 'Code NAF' : level === 'naf4' ? 'Sous-classe NAF' : 'Division NAF';
+    let subText = levelLabel;
+    if (entry.codes_naf5) subText += ` \u00B7 ${entry.codes_naf5.length} codes NAF5 agreg\u00E9s`;
+    document.getElementById('selSub').textContent = subText;
+
+    // KPI cards
+    const kpis = [
+      { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
+      { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
+      { label: 'Taux de gravite', value: fmt(s.taux_gravite), badge: badgeHTML(s.taux_gravite, nat.taux_gravite) },
+      { label: 'Journees d\'IT', value: fmt(s.journees_it), badge: '' },
+      { label: 'AT avec arret 4j+', value: fmt(s.at_4j_arret), badge: '' },
+      { label: 'Deces', value: fmt(s.deces), badge: '' },
+    ];
+
+    document.getElementById('kpiGrid').innerHTML = kpis.map(k =>
+      `<div class="kpi-card">
+        <div class="label">${k.label}</div>
+        <div class="value">${k.value}</div>
+        ${k.badge}
+      </div>`
+    ).join('');
+
+    // Causes chart
+    renderCausesChart(entry.risk_causes);
+
+    // Gauge chart
+    renderGaugeChart(s.indice_frequence, nat.indice_frequence);
+
+    // Comparison chart
+    renderComparisonChart(code, level);
+  }
+
+  // --- Charts ---
+  const CAUSE_COLORS = [
+    '#3b5bdb','#5c7cfa','#748ffc','#91a7ff',
+    '#bac8ff','#dbe4ff','#4dabf7','#74c0fc',
+    '#a5d8ff','#c3fae8','#96f2d7','#63e6be'
+  ];
+
+  function renderCausesChart(causes) {
+    const sorted = Object.entries(causes)
+      .filter(([,v]) => v > 0)
+      .sort((a,b) => b[1] - a[1]);
+
+    const labels = sorted.map(([k]) => k);
+    const values = sorted.map(([,v]) => v);
+
+    if (causesChart) causesChart.destroy();
+    causesChart = new Chart(document.getElementById('causesChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: CAUSE_COLORS.slice(0, values.length),
+          borderRadius: 4,
+          barThickness: 22,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: { label: ctx => `${ctx.parsed.x.toFixed(1)}%` }
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { callback: v => v + '%' },
+            grid: { color: '#f0f0f0' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 11 } }
+          }
+        }
+      }
+    });
+    document.getElementById('causesWrap').style.height =
+      Math.max(200, sorted.length * 34 + 40) + 'px';
+  }
+
+  function renderGaugeChart(secteurIF, nationalIF) {
+    if (gaugeChart) gaugeChart.destroy();
+
+    const maxIF = Math.max(secteurIF, nationalIF) * 1.5;
+    const pct = (secteurIF / maxIF * 100).toFixed(0);
+    const natPct = (nationalIF / maxIF * 100).toFixed(0);
+
+    gaugeChart = new Chart(document.getElementById('gaugeChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Secteur', ''],
+        datasets: [{
+          data: [secteurIF, Math.max(0, maxIF - secteurIF)],
+          backgroundColor: [
+            secteurIF > nationalIF ? '#dc2626' : '#059669',
+            '#f0f0f0'
+          ],
+          borderWidth: 0,
+          circumference: 180,
+          rotation: 270,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '75%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        }
+      },
+      plugins: [{
+        id: 'gaugeText',
+        afterDraw(chart) {
+          const { ctx, chartArea } = chart;
+          const cx = (chartArea.left + chartArea.right) / 2;
+          const cy = chartArea.bottom - 20;
+
+          ctx.save();
+          ctx.textAlign = 'center';
+
+          // Secteur value
+          ctx.font = 'bold 28px -apple-system, sans-serif';
+          ctx.fillStyle = secteurIF > nationalIF ? '#dc2626' : '#059669';
+          ctx.fillText(secteurIF.toFixed(1), cx, cy - 16);
+
+          // Label
+          ctx.font = '12px -apple-system, sans-serif';
+          ctx.fillStyle = '#6b7280';
+          ctx.fillText('IF secteur', cx, cy + 2);
+
+          // National line
+          ctx.font = '11px -apple-system, sans-serif';
+          ctx.fillStyle = '#6b7280';
+          ctx.fillText(`National : ${nationalIF.toFixed(1)}`, cx, cy + 20);
+
+          ctx.restore();
+        }
+      }]
+    });
+  }
+
+  function renderComparisonChart(code, level) {
+    // Find siblings: same parent level, top 10 by IF
+    let siblings = [];
+    const store = getStore(level);
+
+    if (level === 'naf5') {
+      const naf4 = code.substring(0, 4);
+      siblings = Object.entries(store)
+        .filter(([k]) => k.startsWith(naf4))
+        .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
+      document.getElementById('compTitle').textContent =
+        `Comparaison NAF5 dans ${naf4}`;
+    } else if (level === 'naf4') {
+      const naf2 = code.substring(0, 2);
+      siblings = Object.entries(store)
+        .filter(([k, v]) => v.naf2 === naf2)
+        .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
+      document.getElementById('compTitle').textContent =
+        `Comparaison NAF4 dans division ${naf2}`;
+    } else {
+      siblings = Object.entries(store)
+        .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
+      document.getElementById('compTitle').textContent =
+        `Comparaison NAF2 (toutes divisions)`;
+    }
+
+    // Sort by IF descending, keep top 10 but always include current
+    siblings.sort((a, b) => b.if_val - a.if_val);
+    let top = siblings.slice(0, 10);
+    if (!top.find(s => s.code === code)) {
+      const current = siblings.find(s => s.code === code);
+      if (current) { top.pop(); top.push(current); top.sort((a,b) => b.if_val - a.if_val); }
+    }
+
+    const labels = top.map(s => `${s.code} ${s.libelle}`.substring(0, 40));
+    const values = top.map(s => s.if_val);
+    const colors = top.map(s => s.code === code ? '#3b5bdb' : '#bac8ff');
+
+    if (compChart) compChart.destroy();
+    compChart = new Chart(document.getElementById('compChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors,
+          borderRadius: 4,
+          barThickness: 24,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: { label: ctx => `IF: ${ctx.parsed.x.toFixed(1)}` }
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            title: { display: true, text: 'Indice de frequence' },
+            grid: { color: '#f0f0f0' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 11 } }
+          }
+        }
+      }
+    });
+    document.getElementById('compWrap').style.height =
+      Math.max(200, top.length * 34 + 60) + 'px';
+  }
+
+  // --- URL hash ---
+  function loadFromHash() {
+    const hash = window.location.hash.replace('#', '').trim();
+    if (!hash) return;
+
+    // Auto-detect level
+    for (const level of ['naf5', 'naf4', 'naf2']) {
+      if (getStore(level)[hash]) {
+        setLevel(level);
+        selectCode(hash, level);
+        return;
+      }
+    }
+    // Try uppercase
+    const upper = hash.toUpperCase();
+    for (const level of ['naf5', 'naf4', 'naf2']) {
+      if (getStore(level)[upper]) {
+        setLevel(level);
+        selectCode(upper, level);
+        return;
+      }
+    }
+  }
+
+  window.addEventListener('hashchange', loadFromHash);
+  loadFromHash();
+
+})();
+</script>
+</body>
+</html>
