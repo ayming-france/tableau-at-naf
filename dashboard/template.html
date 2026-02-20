@@ -590,8 +590,12 @@
     } else {
       const q = normalize(query);
       const qUp = query.trim().toUpperCase();
+      const isCodeSearch = /^[0-9]/.test(query.trim());
       matches = DATA.naf_index
-        .filter(e => normalize(e.code).includes(q) || normalize(e.libelle).includes(q))
+        .filter(e => {
+          if (isCodeSearch) return e.code.toUpperCase().startsWith(qUp);
+          return normalize(e.code).includes(q) || normalize(e.libelle).includes(q);
+        })
         .sort((a, b) => {
           // 1. Active level first
           const aLevel = a.level === currentLevel ? 0 : 1;
