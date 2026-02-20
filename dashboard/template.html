@@ -589,9 +589,22 @@
       matches = defaultEntries;
     } else {
       const q = normalize(query);
-      matches = DATA.naf_index.filter(e =>
-        normalize(e.code).includes(q) || normalize(e.libelle).includes(q)
-      ).slice(0, 15);
+      const qUp = query.trim().toUpperCase();
+      matches = DATA.naf_index
+        .filter(e => normalize(e.code).includes(q) || normalize(e.libelle).includes(q))
+        .sort((a, b) => {
+          // 1. Active level first
+          const aLevel = a.level === currentLevel ? 0 : 1;
+          const bLevel = b.level === currentLevel ? 0 : 1;
+          if (aLevel !== bLevel) return aLevel - bLevel;
+          // 2. Code starts with query first
+          const aStarts = a.code.toUpperCase().startsWith(qUp) ? 0 : 1;
+          const bStarts = b.code.toUpperCase().startsWith(qUp) ? 0 : 1;
+          if (aStarts !== bStarts) return aStarts - bStarts;
+          // 3. Sort by code
+          return a.code.localeCompare(b.code);
+        })
+        .slice(0, 20);
     }
 
     if (matches.length === 0) { closeAc(); return; }
