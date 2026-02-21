@@ -900,9 +900,9 @@
         <span class="icon">/</span>
         <input type="text" id="searchInput" placeholder="code NAF ou activite..." autocomplete="off">
         <div class="level-tabs" id="levelTabs">
-          <button data-level="naf5" class="active">NAF</button>
+          <button data-level="naf2" class="active">NAF2</button>
+          <button data-level="naf5">NAF</button>
           <button data-level="naf4">NAF4</button>
-          <button data-level="naf2">NAF2</button>
         </div>
         <div class="autocomplete" id="autocomplete"></div>
       </div>
@@ -948,6 +948,11 @@
 
     <div class="kpi-grid" id="kpiGrid"></div>
 
+    <div class="comparison-card" id="compCard">
+      <h3 id="compTitle">Comparaison</h3>
+      <div class="chart-wrap" id="compWrap" style="height:320px"><canvas id="compChart"></canvas></div>
+    </div>
+
     <div class="position-card" id="positionCard">
       <h3 id="posTitle">Positionnement IF</h3>
       <div class="pos-strip-wrap" id="posStrip"></div>
@@ -962,11 +967,6 @@
         <h3>Cascade de severite</h3>
         <div id="funnelWrap"></div>
       </div>
-    </div>
-
-    <div class="comparison-card" id="compCard">
-      <h3 id="compTitle">Comparaison</h3>
-      <div class="chart-wrap" id="compWrap" style="height:360px"><canvas id="compChart"></canvas></div>
     </div>
   </div>
 
@@ -1016,7 +1016,7 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
 
   // --- State ---
   let currentCode = null;
-  let currentLevel = 'naf5';
+  let currentLevel = 'naf2';
   let causesChart = null;
   let compChart = null;
   let acIndex = -1;
@@ -1581,42 +1581,47 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
     });
   }
 
+  // ── Comparison chart rules (no top-10 cap, show ALL entries) ──
+  // NAF  (naf5): all NAF5 siblings in same NAF2 division (e.g. 4711D → all 47xx)
+  // NAF4 (naf4): all NAF5 codes under that NAF4 group (e.g. 4711 → 4711A,4711B,4711D…)
+  // NAF2 (naf2): all NAF2 divisions
+  // Clicking a bar navigates to that code (NAF4 bars navigate to NAF5 level).
   function renderComparisonChart(code, level) {
-    let siblings = [];
-    const store = getStore(level);
+    let items = [];
+    const naf5Store = getStore('naf5');
+    let clickLevel = level; // level to navigate to on click
 
     if (level === 'naf5') {
       const naf2 = code.substring(0, 2);
-      siblings = Object.entries(store)
-        .filter(([k]) => k.startsWith(naf2))
+      items = Object.entries(naf5Store)
+        .filter(([k]) => k.substring(0, 2) === naf2)
         .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
       document.getElementById('compTitle').textContent =
         `Comparaison // division ${naf2}`;
     } else if (level === 'naf4') {
-      const naf2 = code.substring(0, 2);
-      siblings = Object.entries(store)
-        .filter(([k]) => k.startsWith(naf2))
+      // Drill into NAF5 children of this NAF4 group
+      items = Object.entries(naf5Store)
+        .filter(([k]) => k.substring(0, 4) === code)
         .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
+      clickLevel = 'naf5'; // bars are NAF5 codes
       document.getElementById('compTitle').textContent =
-        `Comparaison // division ${naf2}`;
+        `Comparaison // sous-classes ${code}`;
     } else {
-      siblings = Object.entries(store)
+      const naf2Store = getStore('naf2');
+      items = Object.entries(naf2Store)
         .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
       document.getElementById('compTitle').textContent =
         `Comparaison // toutes divisions`;
     }
 
-    siblings.sort((a, b) => b.if_val - a.if_val);
-    let top = siblings.slice(0, 10);
-    if (!top.find(s => s.code === code)) {
-      const current = siblings.find(s => s.code === code);
-      if (current) { top.pop(); top.push(current); top.sort((a,b) => b.if_val - a.if_val); }
-    }
+    items.sort((a, b) => b.if_val - a.if_val);
 
-    const labels = top.map(s => `${s.code}  ${s.libelle}`.substring(0, 40));
-    const values = top.map(s => s.if_val);
-    const colors = top.map(s => s.code === code ? '#d4a043' : '#2d333b');
-    const borderColors = top.map(s => s.code === code ? '#d4a043' : '#373e47');
+    // Highlight: NAF5/NAF2 = selected code in accent; NAF4 = all bars accent (breakdown of current)
+    const labels = items.map(s => s.code);
+    const values = items.map(s => s.if_val);
+    const allAccent = (level === 'naf4');
+    const colors = items.map(s => (allAccent || s.code === code) ? '#d4a043' : '#2d333b');
+    const borderColors = items.map(s => (allAccent || s.code === code) ? '#d4a043' : '#373e47');
 
     const canvas = document.getElementById('compChart');
     canvas.style.cursor = 'pointer';
@@ -1631,20 +1636,18 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
           backgroundColor: colors,
           borderColor: borderColors,
           borderWidth: 1,
-          borderRadius: 1,
-          barThickness: 22,
+          borderRadius: { topLeft: 2, topRight: 2 },
         }]
       },
       options: {
-        indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
         onClick: function(evt, elements) {
           if (elements.length > 0) {
             const idx = elements[0].index;
-            const target = top[idx];
+            const target = items[idx];
             if (target && target.code !== code) {
-              selectCode(target.code, level);
+              selectCode(target.code, clickLevel);
             }
           }
         },
@@ -1656,30 +1659,39 @@ const DATA = {"meta":{"source":"Ameli - Risque AT par CTN x NAF 2023","source_ur
             borderWidth: 1,
             titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
             bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
-            callbacks: { label: ctx => ` IF: ${ctx.parsed.x.toFixed(1)}` }
+            callbacks: {
+              title: ctx => {
+                const i = ctx[0].dataIndex;
+                return `${items[i].code}  ${items[i].libelle}`;
+              },
+              label: ctx => ` IF: ${ctx.parsed.y.toFixed(1)}`
+            }
           }
         },
         scales: {
-          x: {
+          y: {
             beginAtZero: true,
+            ticks: { font: { family: "'JetBrains Mono', monospace", size: 10 } },
+            grid: { color: 'rgba(45,51,59,0.5)' }
+          },
+          x: {
+            grid: { display: false },
             title: {
               display: true,
               text: 'Indice de frequence',
               font: { family: "'JetBrains Mono', monospace", size: 10, weight: '500' },
               color: '#545d68'
             },
-            ticks: { font: { family: "'JetBrains Mono', monospace", size: 10 } },
-            grid: { color: 'rgba(45,51,59,0.5)' }
-          },
-          y: {
-            grid: { display: false },
-            ticks: { font: { size: 11 } }
+            ticks: {
+              font: { family: "'JetBrains Mono', monospace", size: 9 },
+              maxRotation: 90,
+              minRotation: 45
+            }
           }
         }
       }
     });
-    document.getElementById('compWrap').style.height =
-      Math.max(200, top.length * 34 + 60) + 'px';
+    document.getElementById('compWrap').style.height = '320px';
   }
 
   // --- URL hash ---
