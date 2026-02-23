@@ -2156,40 +2156,42 @@
     var evColors = barColors(99, 102, 241, nYears);
     var ifColors = barColors(234, 179, 8, nYears);
 
-    // 1. Events chart (line for trajet, bar for others)
+    // 1. Events chart (line with fill)
     var evCanvas = viewEl(viewId, 'evoEvents');
-    var evDataset = viewId === 'trajet'
-      ? { label: eventLabel, data: sectorEvents, borderColor: '#6366f1', borderWidth: 2, pointRadius: 5, pointBackgroundColor: '#6366f1', pointHoverRadius: 7, fill: true, backgroundColor: 'rgba(99,102,241,0.1)', tension: 0.3 }
-      : { label: eventLabel, data: sectorEvents, backgroundColor: evColors.bg, borderColor: evColors.border, borderWidth: 1, borderRadius: 4 };
     vs.evoCharts.push(new Chart(evCanvas, {
-      type: viewId === 'trajet' ? 'line' : 'bar',
-      data: { labels: years, datasets: [evDataset] },
+      type: 'line',
+      data: { labels: years, datasets: [{
+        label: eventLabel, data: sectorEvents,
+        borderColor: '#6366f1', borderWidth: 2,
+        pointRadius: 5, pointBackgroundColor: '#6366f1', pointHoverRadius: 7,
+        fill: true, backgroundColor: 'rgba(99,102,241,0.1)', tension: 0.3,
+      }] },
       options: Object.assign({}, baseOpts, {
         plugins: Object.assign({}, baseOpts.plugins, {
           title: { display: true, text: eventLabel, font: { family: 'var(--sans)', size: 13, weight: '500' }, color: '#cbd5e1', padding: { bottom: 8 } },
         }),
       }),
-      plugins: viewId === 'trajet' ? [] : [deltaPlugin(sectorEvents)],
     }));
 
-    // 2. IF chart (bar + national line) - skip for views without IF canvas
+    // 2. IF chart (sector line + national dashed line) - skip for views without IF canvas
     var ifCanvas = viewEl(viewId, 'evoIF');
     if (ifCanvas) {
       vs.evoCharts.push(new Chart(ifCanvas, {
-        type: 'bar',
+        type: 'line',
         data: {
           labels: years,
           datasets: [
             {
               label: 'Secteur', data: sectorIF,
-              backgroundColor: ifColors.bg,
-              borderColor: ifColors.border, borderWidth: 1, borderRadius: 4,
+              borderColor: '#eab308', borderWidth: 2,
+              pointRadius: 5, pointBackgroundColor: '#eab308', pointHoverRadius: 7,
+              fill: true, backgroundColor: 'rgba(234,179,8,0.1)', tension: 0.3,
             },
             {
-              label: 'National', data: natIF, type: 'line',
+              label: 'National', data: natIF,
               borderColor: '#64748b', borderWidth: 2, borderDash: [6, 3],
               pointRadius: 4, pointBackgroundColor: '#64748b',
-              fill: false,
+              fill: false, tension: 0.3,
             }
           ]
         },
@@ -2198,29 +2200,28 @@
             title: { display: true, text: 'Indice de Frequence', font: { family: 'var(--sans)', size: 13, weight: '500' }, color: '#cbd5e1', padding: { bottom: 8 } },
           }),
         }),
-        plugins: [deltaPlugin(sectorIF)],
       }));
     }
 
-    // 3. TG chart (bar + national line) - skip for views without TG
+    // 3. TG chart (sector line + national dashed line) - skip for views without TG
     var tgCanvas = viewEl(viewId, 'evoTG');
     if (tgCanvas) {
-      var tgColors = barColors(239, 68, 68, nYears);
       vs.evoCharts.push(new Chart(tgCanvas, {
-        type: 'bar',
+        type: 'line',
         data: {
           labels: years,
           datasets: [
             {
               label: 'Secteur', data: sectorTG,
-              backgroundColor: tgColors.bg,
-              borderColor: tgColors.border, borderWidth: 1, borderRadius: 4,
+              borderColor: '#ef4444', borderWidth: 2,
+              pointRadius: 5, pointBackgroundColor: '#ef4444', pointHoverRadius: 7,
+              fill: true, backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.3,
             },
             {
-              label: 'National', data: natTG, type: 'line',
+              label: 'National', data: natTG,
               borderColor: '#64748b', borderWidth: 2, borderDash: [6, 3],
               pointRadius: 4, pointBackgroundColor: '#64748b',
-              fill: false,
+              fill: false, tension: 0.3,
             }
           ]
         },
@@ -2229,7 +2230,6 @@
             title: { display: true, text: 'Taux de Gravite', font: { family: 'var(--sans)', size: 13, weight: '500' }, color: '#cbd5e1', padding: { bottom: 8 } },
           }),
         }),
-        plugins: [deltaPlugin(sectorTG)],
       }));
     }
   }

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Parse Ameli per-NAF PDF fiches to extract demographics, trajet, and synthesis data.
+"""Parse Ameli per-NAF PDF fiches to extract demographics and yearly data.
 
 Input: local PDFs at ~/Desktop/Etude-BPO/chart_extractor_project_full/input_pdfs/
-Output: dict[naf5, parsed_data] with trajet, sex breakdown, age breakdown.
+Output: dict[naf5, parsed_data] with AT/Trajet/MP yearly, sex breakdown, age breakdown.
 """
 
 import re
@@ -50,106 +50,120 @@ def parse_table_row_numbers(digit_groups: list[str], max_values: list[int]) -> l
 # NAF5 level: AT max ~120k, IP max ~10k, deces max ~200, journees max ~10M
 ROW_MAX_VALUES = [200_000, 20_000, 500, 50_000_000]
 
-# Trajet yearly max values for parse_table_row_numbers.
-# Used with adaptive parsing: try strict (low) max first, relax if needed.
-TRAJET_ROW_MAX_STRICT = {
-    "count": [999] * 5,
-    "ip": [999] * 5,
-    "deces": [99] * 5,
-    "journees": [999] * 5,
+# Adaptive max values for yearly row parsing (strict -> mid -> relaxed).
+# Strict prevents merging, mid allows small thousands, relaxed allows all.
+YEARLY_MAX = {
+    "at": {
+        "strict":  {"count": [999] * 5, "ip": [999] * 5, "deces": [99] * 5, "journees": [999] * 5, "salaries": [999] * 5},
+        "mid":     {"count": [50_000] * 5, "ip": [9_999] * 5, "deces": [99] * 5, "journees": [9_999] * 5, "salaries": [9_999] * 5},
+        "relaxed": {"count": [200_000] * 5, "ip": [20_000] * 5, "deces": [500] * 5, "journees": [50_000_000] * 5, "salaries": [999_999] * 5},
+    },
+    "trajet": {
+        "strict":  {"count": [999] * 5, "ip": [999] * 5, "deces": [99] * 5, "journees": [999] * 5},
+        "mid":     {"count": [9_999] * 5, "ip": [999] * 5, "deces": [99] * 5, "journees": [9_999] * 5},
+        "relaxed": {"count": [15_000] * 5, "ip": [5_000] * 5, "deces": [100] * 5, "journees": [999_999] * 5},
+    },
+    "mp": {
+        "strict":  {"count": [999] * 5, "ip": [999] * 5, "deces": [99] * 5, "journees": [999] * 5},
+        "mid":     {"count": [9_999] * 5, "ip": [9_999] * 5, "deces": [99] * 5, "journees": [9_999] * 5},
+        "relaxed": {"count": [50_000] * 5, "ip": [20_000] * 5, "deces": [100] * 5, "journees": [10_000_000] * 5},
+    },
 }
-TRAJET_ROW_MAX_MID = {
-    "count": [9_999] * 5,
-    "ip": [999] * 5,
-    "deces": [99] * 5,
-    "journees": [9_999] * 5,
-}
-TRAJET_ROW_MAX_RELAXED = {
-    "count": [15_000] * 5,
-    "ip": [5_000] * 5,
-    "deces": [100] * 5,
-    "journees": [999_999] * 5,
-}
+YEARLY_YEARS = ["2019", "2020", "2021", "2022", "2023"]
 
 
-def _parse_trajet_row(digit_groups: list[str], key: str) -> list[int]:
-    """Parse a trajet row, trying multiple max thresholds to get exactly 5 values.
-
-    Strict (999) prevents any merging. Mid (9999) allows 1-digit thousands
-    like "1 170" but not "872 932". Relaxed (999999) allows all merging.
-    """
-    for max_vals in [TRAJET_ROW_MAX_STRICT[key], TRAJET_ROW_MAX_MID[key], TRAJET_ROW_MAX_RELAXED[key]]:
+def _parse_yearly_row(digit_groups: list[str], section: str, key: str) -> list[int]:
+    """Parse a yearly row, trying strict -> mid -> relaxed thresholds for exactly 5 values."""
+    for level in ["strict", "mid", "relaxed"]:
+        max_vals = YEARLY_MAX[section][level][key]
         result = parse_table_row_numbers(digit_groups, max_vals)
         if len(result) == 5:
             return result
-    # None yielded 5; return best guess
-    return parse_table_row_numbers(digit_groups, TRAJET_ROW_MAX_STRICT[key])
-TRAJET_YEARS = ["2019", "2020", "2021", "2022", "2023"]
+    return parse_table_row_numbers(digit_groups, YEARLY_MAX[section]["strict"][key])
 
 
-def parse_trajet_yearly(page_text: str) -> dict[str, dict] | None:
-    """Extract trajet yearly table (5 years) from page 1 text.
+def _parse_yearly_section(page_text: str, section: str) -> dict[str, dict] | None:
+    """Extract a yearly table (5 years) from page 1 text.
 
-    Looks for lines like:
-        Nombre d' Acc. de trajet en 1er regl. : 1 775 1 594 1 971 1 782 1 910
-        Nombre de nouvelles IP : 91 80 106 118 91
-        Nombre de deces : 2 7 0 3 9
-        Nombre de journees perdues : 129 224 143 040 158 120 155 909 167 530
+    Args:
+        page_text: text from the left-cropped page (0.55 width)
+        section: "at", "trajet", or "mp"
 
-    Returns: {"2019": {"count": 1775, "ip": 91, "deces": 2, "journees": 129224}, ...}
+    Returns: {"2019": {"count": N, "ip": N, "deces": N, "journees": N, "salaries": N?}, ...}
     """
-    # Find the trajet section (after "Accidents de trajet" header with years)
+    headers = {
+        "at": "Accidents du travail",
+        "trajet": "Accidents de trajet",
+        "mp": "Maladies professionnelles",
+    }
+    count_patterns = {
+        "at": lambda l: "travail en 1er" in l.lower() or "acc. du travail" in l.lower(),
+        "trajet": lambda l: "trajet en 1er" in l.lower() or "acc. de trajet" in l.lower(),
+        "mp": lambda l: "mp en 1er" in l.lower(),
+    }
+    stop_markers = {
+        "at": ["Accidents de trajet", "Indice de fr"],
+        "trajet": ["Maladies professionnelles", "Indice de fr"],
+        "mp": ["Indice de fr", "*Pour les ann"],
+    }
+
     lines = page_text.split("\n")
-    trajet_section = False
-    raw = {"count": [], "ip": [], "deces": [], "journees": []}
+    in_section = False
+    raw = {"count": [], "ip": [], "deces": [], "journees": [], "salaries": []}
 
     for line in lines:
-        if "Accidents de trajet" in line and "2019" in line:
-            trajet_section = True
+        if headers[section] in line and "2019" in line:
+            in_section = True
             continue
-        if not trajet_section:
+        if not in_section:
             continue
 
-        # Stop at next section header (starts with "Maladies" or "Indice de fr")
-        if line.startswith("Maladies professionnelles") or line.startswith("Indice de fr"):
+        if any(line.startswith(m) for m in stop_markers[section]):
             break
 
-        # Extract numbers after the colon
+        # Salaries line has no colon (AT section only): "Nombre de salariés* 227 384 ..."
+        if "salariés" in line and ":" not in line and section == "at":
+            digit_groups = re.findall(r"\d+", line.split("salariés")[1])
+            if digit_groups:
+                raw["salaries"] = _parse_yearly_row(digit_groups, "at", "salaries")
+            continue
+
         if ":" not in line:
             continue
         after_colon = line.split(":", 1)[1]
-        # Stop parsing at non-numeric suffix (e.g. "Principales maladies")
         after_colon = re.split(r"[A-Za-zÀ-ÿ]{2,}", after_colon)[0]
         digit_groups = re.findall(r"\d+", after_colon)
         if not digit_groups:
             continue
 
-        if "trajet en 1er" in line.lower() or "acc. de trajet" in line.lower():
-            raw["count"] = _parse_trajet_row(digit_groups, "count")
+        if count_patterns[section](line):
+            raw["count"] = _parse_yearly_row(digit_groups, section, "count")
         elif "nouvelles ip" in line.lower():
-            raw["ip"] = _parse_trajet_row(digit_groups, "ip")
+            raw["ip"] = _parse_yearly_row(digit_groups, section, "ip")
         elif "décès" in line.lower() or "deces" in line.lower():
-            raw["deces"] = _parse_trajet_row(digit_groups, "deces")
+            raw["deces"] = _parse_yearly_row(digit_groups, section, "deces")
         elif "journées perdues" in line.lower() or "journees perdues" in line.lower():
-            raw["journees"] = _parse_trajet_row(digit_groups, "journees")
+            raw["journees"] = _parse_yearly_row(digit_groups, section, "journees")
 
-        # Stop after journees (last row of trajet section)
         if raw["journees"]:
             break
 
-    # Validate: each row should have exactly 5 values
     for key in ["count", "ip", "deces", "journees"]:
         if len(raw[key]) != 5:
             return None
 
     result = {}
-    for i, year in enumerate(TRAJET_YEARS):
-        result[year] = {
+    has_salaries = len(raw["salaries"]) == 5
+    for i, year in enumerate(YEARLY_YEARS):
+        entry = {
             "count": raw["count"][i],
             "ip": raw["ip"][i],
             "deces": raw["deces"][i],
             "journees": raw["journees"][i],
         }
+        if has_salaries:
+            entry["salaries"] = raw["salaries"][i]
+        result[year] = entry
     return result
 
 
@@ -270,7 +284,9 @@ def parse_one_pdf(path: str | Path) -> dict | None:
     Returns:
         {
             "synthesis": {"at": {count, evo}, "trajet": {count, evo}, "mp": {count, evo}},
-            "trajet": {"count": int, "evolution_pct": float},
+            "at_yearly": {"2019": {count, ip, deces, journees}, ...},
+            "trajet_yearly": {"2019": {count, ip, deces, journees}, ...},
+            "mp_yearly": {"2019": {count, ip, deces, journees}, ...},
             "sex": {"masculin": int, "feminin": int},
             "age": {"15-19": int, "20-29": int, ...}
         }
@@ -282,11 +298,17 @@ def parse_one_pdf(path: str | Path) -> dict | None:
         return None
 
     try:
-        # Page 1: synthesis + trajet yearly
-        p1_text = pdf.pages[0].extract_text()
+        p1 = pdf.pages[0]
+        p1_text = p1.extract_text()
         synthesis = parse_synthesis(p1_text)
-        trajet = synthesis.get("trajet", {"count": 0, "evolution_pct": None})
-        trajet_yearly = parse_trajet_yearly(p1_text)
+
+        # Crop left 55% of page 1 to avoid chart overlay on AT yearly data
+        cropped = p1.crop((0, 0, p1.width * 0.55, p1.height * 0.35))
+        cropped_text = cropped.extract_text()
+
+        at_yearly = _parse_yearly_section(cropped_text, "at")
+        trajet_yearly = _parse_yearly_section(cropped_text, "trajet")
+        mp_yearly = _parse_yearly_section(cropped_text, "mp")
 
         # Page 2: AT details (sex + age)
         p2 = pdf.pages[1]
@@ -301,8 +323,9 @@ def parse_one_pdf(path: str | Path) -> dict | None:
 
         return {
             "synthesis": synthesis,
-            "trajet": trajet,
+            "at_yearly": at_yearly,
             "trajet_yearly": trajet_yearly,
+            "mp_yearly": mp_yearly,
             "sex": sex,
             "age": age,
         }

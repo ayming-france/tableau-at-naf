@@ -711,7 +711,7 @@ AGE_GROUPS = ["15-19", "20-29", "30-39", "40-49", "50-59", "60+"]
 
 
 def merge_pdf_data(at_data, pdf_data):
-    """Merge PDF-extracted demographics + trajet into AT data at all levels."""
+    """Merge PDF-extracted demographics into AT data at all levels."""
     # NAF5 level: direct merge
     for code, parsed in pdf_data.items():
         if code not in at_data["by_naf5"]:
@@ -719,14 +719,16 @@ def merge_pdf_data(at_data, pdf_data):
         entry = at_data["by_naf5"][code]
         if parsed["sex"]:
             entry["demographics"] = {"sex": parsed["sex"], "age": parsed["age"]}
-        if parsed["trajet"]:
-            entry["trajet"] = parsed["trajet"]
+        # Trajet count from synthesis
+        trajet = parsed.get("synthesis", {}).get("trajet")
+        if trajet:
+            entry["trajet"] = trajet
 
-    # NAF4/NAF2: aggregate by summing NAF5 counts
+    # NAF4/NAF2: aggregate demographics by summing NAF5 counts
     for level, key_fn in [("by_naf4", lambda c: c[:4]), ("by_naf2", lambda c: c[:2])]:
         agg = defaultdict(lambda: {
             "sex": defaultdict(int), "age": defaultdict(int),
-            "trajet_count": 0, "has_trajet_evo": False, "trajet_evo_codes": 0,
+            "trajet_count": 0,
         })
         for code, parsed in pdf_data.items():
             key = key_fn(code)
@@ -735,8 +737,9 @@ def merge_pdf_data(at_data, pdf_data):
                     agg[key]["sex"][s] += v
                 for a, v in parsed["age"].items():
                     agg[key]["age"][a] += v
-            if parsed["trajet"]:
-                agg[key]["trajet_count"] += parsed["trajet"]["count"]
+            trajet = parsed.get("synthesis", {}).get("trajet")
+            if trajet:
+                agg[key]["trajet_count"] += trajet["count"]
 
         for code, data in agg.items():
             if code not in at_data[level]:
@@ -759,8 +762,9 @@ def merge_pdf_data(at_data, pdf_data):
                 nat_sex[s] += v
             for a, v in parsed["age"].items():
                 nat_age[a] += v
-        if parsed["trajet"]:
-            nat_trajet += parsed["trajet"]["count"]
+        trajet = parsed.get("synthesis", {}).get("trajet")
+        if trajet:
+            nat_trajet += trajet["count"]
 
     at_data["meta"]["national"]["demographics"] = {
         "sex": dict(nat_sex),
@@ -986,35 +990,94 @@ def build_trajet_data(pdf_data, at_data):
     }
 
 
+def build_yearly_from_pdf(pdf_data, section_key, base_data=None):
+    """Build yearly evolution data from PDF yearly tables (5 years).
+
+    Args:
+        pdf_data: {naf5: parsed_pdf} from parse_all_pdfs
+        section_key: "at_yearly", "mp_yearly"
+        base_data: for MP, pass AT base_data to get workforce (salaries) per year.
+                   AT uses its own salaries from PDF; if missing, falls back to 2023 Excel.
+
+    Returns: {year: {naf5: {...}, naf4: {...}, naf2: {...}, national: {...}}, ...}
+    """
+    years = ["2019", "2020", "2021", "2022", "2023"]
+    yearly_by_year = {}
+
+    for year in years:
+        naf5_data = {}
+        for code, pdf in pdf_data.items():
+            yearly = pdf.get(section_key)
+            if not yearly or year not in yearly:
+                continue
+            y = yearly[year]
+
+            # Get salaries for IF computation
+            if section_key == "at_yearly":
+                # AT: use PDF salaries, fall back to 2023 Excel
+                nb_sal = y.get("salaries", 0)
+                if nb_sal == 0 and base_data and code in base_data["by_naf5"]:
+                    nb_sal = base_data["by_naf5"][code]["stats"]["nb_salaries"]
+            else:
+                # MP: use AT PDF salaries for the same year, fall back to 2023
+                nb_sal = 0
+                at_yearly = pdf_data.get(code, {}).get("at_yearly")
+                if at_yearly and year in at_yearly:
+                    nb_sal = at_yearly[year].get("salaries", 0)
+                if nb_sal == 0 and base_data and code in base_data["by_naf5"]:
+                    nb_sal = base_data["by_naf5"][code]["stats"]["nb_salaries"]
+
+            # Get nb_heures from 2023 Excel data for TG (rough proxy)
+            nb_h = 0
+            if base_data and code in base_data["by_naf5"]:
+                nb_h = base_data["by_naf5"][code]["stats"].get("nb_heures", 0)
+
+            events = y["count"]
+            journees = y["journees"]
+            naf5_data[code] = {
+                "events": events,
+                "nb_salaries": int(nb_sal),
+                "nb_heures": int(nb_h),
+                "nb_siret": 0,
+                "nouvelles_ip": y["ip"],
+                "deces": y["deces"],
+                "journees_it": journees,
+                "indice_frequence": round(events / nb_sal * 1000, 1) if nb_sal > 0 else 0,
+                "taux_gravite": round(journees / (nb_h / 1000), 2) if nb_h > 0 else 0,
+            }
+
+        yearly_by_year[year] = {
+            "naf5": naf5_data,
+            "naf4": aggregate_yearly_to_level(naf5_data, lambda c: c[:4]),
+            "naf2": aggregate_yearly_to_level(naf5_data, lambda c: c[:2]),
+            "national": compute_yearly_national(naf5_data),
+        }
+
+    count = sum(1 for pdf in pdf_data.values() if pdf.get(section_key))
+    print(f"  Built 5-year yearly from {count} PDFs ({section_key})")
+    return yearly_by_year
+
+
 def main():
     # ── AT ──
     print("=== AT Pipeline ===")
     print("1. Download...")
     download_xlsx(AT_XLSX_PATH, AT_XLSX_URL)
-    download_xlsx(AT_2021_XLSX_PATH, AT_2021_XLSX_URL)
     print("2. Parse...")
     at_rows = parse_at_xlsx()
     print("3. Build...")
     at_data = build_at_data(at_rows)
 
-    # AT yearly evolution
-    print("4. Yearly evolution...")
-    at_yearly = {}
-    for year, path in [("2021", AT_2021_XLSX_PATH), ("2023", AT_XLSX_PATH)]:
-        naf5 = parse_yearly_xlsx(path, YEARLY_AT_COLS, is_mp=False)
-        at_yearly[year] = {
-            "naf5": naf5,
-            "naf4": aggregate_yearly_to_level(naf5, lambda c: c[:4]),
-            "naf2": aggregate_yearly_to_level(naf5, lambda c: c[:2]),
-            "national": compute_yearly_national(naf5),
-        }
-    merge_yearly_into_data(at_data, at_yearly)
-
-    # PDF demographics + trajet
-    print("5. PDF demographics + trajet...")
+    # PDF data (shared across AT, MP, Trajet pipelines)
+    print("4. PDF parsing...")
     from parse_pdf import parse_all_pdfs
     pdf_data = parse_all_pdfs()
     merge_pdf_data(at_data, pdf_data)
+
+    # AT yearly evolution (5 years from PDF)
+    print("5. Yearly evolution (PDF 5-year)...")
+    at_yearly = build_yearly_from_pdf(pdf_data, "at_yearly", base_data=at_data)
+    merge_yearly_into_data(at_data, at_yearly)
 
     print("6. Write...")
     write_outputs(at_data, AT_JSON_PATH, AT_PKL_PATH, "AT")
@@ -1024,23 +1087,14 @@ def main():
     print("\n=== MP Pipeline ===")
     print("1. Download...")
     download_xlsx(MP_XLSX_PATH, MP_XLSX_URL)
-    download_xlsx(MP_2021_XLSX_PATH, MP_2021_XLSX_URL)
     print("2. Parse...")
     mp_rows = parse_mp_xlsx()
     print("3. Build...")
     mp_data = build_mp_data(mp_rows)
 
-    # MP yearly evolution
-    print("4. Yearly evolution...")
-    mp_yearly = {}
-    for year, path in [("2021", MP_2021_XLSX_PATH), ("2023", MP_XLSX_PATH)]:
-        naf5 = parse_yearly_xlsx(path, YEARLY_MP_COLS, is_mp=True)
-        mp_yearly[year] = {
-            "naf5": naf5,
-            "naf4": aggregate_yearly_to_level(naf5, lambda c: c[:4]),
-            "naf2": aggregate_yearly_to_level(naf5, lambda c: c[:2]),
-            "national": compute_yearly_national(naf5),
-        }
+    # MP yearly evolution (5 years from PDF, using AT workforce for IF)
+    print("4. Yearly evolution (PDF 5-year)...")
+    mp_yearly = build_yearly_from_pdf(pdf_data, "mp_yearly", base_data=at_data)
     merge_yearly_into_data(mp_data, mp_yearly)
     print("5. Write...")
     write_outputs(mp_data, MP_JSON_PATH, MP_PKL_PATH, "MP")
