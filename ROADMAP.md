@@ -1,45 +1,32 @@
 # BPO Roadmap
 
-## Current: Ameli AT Dashboard
-Status: Live. NAF sector comparison chart, insights, share drawer.
+## Current: Sinistralite Dashboard
+Status: Live. Three views (AT, MP, Trajet), nav-rail, comparison chart, severity funnel, causes doughnut, 5-year evolution (2019-2023), demographics (AT), insights drawer, share drawer, light/dark mode.
 
-## Phase 1: Expand Ameli MCP (AT + Trajet + MP)
+## Phase 1: Expand Ameli MCP (AT + Trajet + MP) -- DONE
 
-### Goal
-Expand the existing Ameli MCP from AT-only to cover all three risk types. Same data pattern, same NAF-level granularity.
+### Status: Complete
 
-### Data Sources (all from Ameli open data)
+**MCP tools delivered:**
+- `at_search_naf`, `at_get_stats` (from Excel)
+- `mp_search_naf`, `mp_get_stats` (from Excel)
+- Trajet data extracted from PDFs (no separate Excel source), surfaced in dashboard view
 
-| Risk type | Excel URL pattern | Status |
-|-----------|------------------|--------|
-| AT (Accidents du travail) | `indicateurs-accidents-travail-ctn-code-naf` | Done |
-| Trajet (Accidents de trajet) | `indicateurs-tr-secteur-activite-ctn-code-naf` | To do |
-| MP (Maladies professionnelles) | `indicateurs-mp-secteur-activite-ctn-code-naf` | To do |
-
-Source hub: https://www.assurance-maladie.ameli.fr/etudes-et-donnees/donnees/liste-donnees-open-data
-
-### New MCP Tools
-
-| Tool | Purpose |
-|------|---------|
-| `trajet_search_naf(query)` | Search trajet stats by NAF code |
-| `trajet_get_stats(naf_code)` | Full trajet statistics for a NAF code |
-| `mp_search_naf(query)` | Search occupational disease stats by NAF code |
-| `mp_get_stats(naf_code)` | Full MP statistics for a NAF code |
-
-### Dashboard
-Add risk type tabs or combined view showing AT + Trajet + MP side by side for a given NAF sector.
+**Dashboard:** Three separate views via nav-rail (AT, MP, Trajet), each with search, KPIs, comparison chart, funnel, and evolution. Not a combined side-by-side view.
 
 ---
 
-## Phase 2: Parse Ameli PDF Fiches (Demographic + Size Data)
+## Phase 2: Parse Ameli PDF Fiches (Demographic + Size Data) -- PARTIAL
 
-### Goal
-Extract per-NAF5-code detailed data from ~730 Ameli PDF fact sheets. This data does NOT exist in the Excel files and is critical for targeting and profiling.
+### Status: Partially complete
+
+**Done:** Synthesis (AT/Trajet/MP counts + evolution), 5-year yearly data (2019-2023), sex breakdown, age breakdown (9 groups). Merged into `at-data.json`. Demographics displayed in AT view.
+
+**Remaining:** Contract type, qualification, lesion types, body parts, establishment size, geographic distribution, injury modality, MP-specific tables (disease breakdown, exposure duration, profession).
 
 ### Source
 - Location: `/Users/encarv/Desktop/Etude-BPO/chart_extractor_project_full/input_pdfs/`
-- Format: `NAF_XXXXZ.pdf`, one per NAF5 code (~730 files)
+- Format: `NAF_{NAF5}.pdf`, one per NAF5 code (~728 files)
 - Origin: Ameli "Fiches de sinistralite par code NAF" (downloadable from https://www.assurance-maladie.ameli.fr/etudes-et-donnees/par-theme/risques-professionnels-et-sinistralite/moteur-recherche-code-ape-naf)
 - 3 pages per PDF: Synthese, AT detail, MP detail
 
@@ -87,23 +74,22 @@ Extract per-NAF5-code detailed data from ~730 Ameli PDF fact sheets. This data d
 
 ### Technical Approach
 
-**Tool:** `pdfplumber` (validated). Word-level extraction with x/y position-based column splitting.
+**Tool:** `pdfplumber` (validated). Text extraction with regex-based parsing.
 
-**Focus: Pages 2 and 3 (tables only).** Page 1 has charts (establishment size, geographic map) that are vector graphics, not present in all PDFs (e.g. NAF_0119Z has zero AT), and fragile to extract. Skip them.
+**Current parser (`data/parse_pdf.py`):**
+- Page 1: regex extraction of synthesis counts (AT, Trajet, MP) + evolution %
+- Page 2: cell-text parsing for sex (masculin/feminin) and age (9 groups) using `parse_table_row_numbers()` with French thousands-separator disambiguation
+- 5-year yearly data (2019-2023): AT, Trajet, MP counts + IP + deces + journees per year
+- Output merged into `at-data.json` at NAF5/NAF4/NAF2/national levels
 
-**Parser method (validated on 4711D, 8710A, 4321A):**
-- Extract words with x/y coordinates
-- Split into left column (x < 290) and right column (x >= 290)
-- Group words into rows by y-position (2.5px grid snap)
-- Assign to 4 numeric columns by x-boundaries: AT (165-200), IP (200-238), Deces (238-260), Journees (260-290)
-- Same approach for right column with shifted boundaries
-- Section headers detected by uppercase text
+**Remaining extraction (Pages 2-3 tables):**
+- Contract type (CDI, CDD, Interimaire, Apprenti)
+- Qualification (Cadres, Employes, Ouvriers)
+- Lesion types, body parts, injury modality
+- Establishment size (IF per bracket, key for targeting)
+- MP disease table breakdown, exposure duration, profession
 
-**Storage:**
-- Extend `at-data.json` with new fields per NAF5 code
-- Or create separate `at-detail.json` / `at-detail.pkl`
-
-**MCP tools:**
+**Planned MCP tools (not yet built):**
 
 | Tool | Purpose |
 |------|---------|
