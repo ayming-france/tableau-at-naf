@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sinistralite par Secteur | Ameli 2023</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --bg-elevated: #ffffff;
+    --bg-card: #ffffff;
+    --bg-alt: #f0f1f3;
+    --border: #dadce0;
+    --border-light: #e8eaed;
+    --text: #202124;
+    --text-secondary: #5f6368;
+    --text-dim: #80868b;
+    --accent: #1a73e8;
+    --accent-glow: rgba(26,115,232,0.08);
+    --accent-strong: rgba(26,115,232,0.14);
+    --danger: #d32f2f;
+    --danger-dim: rgba(211,47,47,0.08);
+    --safe: #2e7d32;
+    --safe-dim: rgba(46,125,50,0.08);
+    --warning: #e37400;
+    --warning-dim: rgba(227,116,0,0.08);
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --card-shadow-lg: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+    --card-shadow-xl: 0 20px 60px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06);
+    --mono: 'JetBrains Mono', 'SF Mono', monospace;
+    --sans: 'Lato', -apple-system, sans-serif;
+    --grid-dot: rgba(0,0,0,0.035);
+    --mockup-bg: #1c2128;
+    --mockup-border: #2d333b;
+    --glow-1: rgba(26,115,232,0.15);
+    --glow-2: rgba(211,47,47,0.08);
+  }
+
+  [data-theme="dark"] {
+    --bg: #0f1419;
+    --bg-elevated: #161b22;
+    --bg-card: #1c2128;
+    --bg-alt: #141920;
+    --border: #2d333b;
+    --border-light: #373e47;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-dim: #545d68;
+    --accent: #8ab4f8;
+    --accent-glow: rgba(138,180,248,0.1);
+    --accent-strong: rgba(138,180,248,0.18);
+    --danger: #e5534b;
+    --danger-dim: rgba(229,83,75,0.12);
+    --safe: #3fb950;
+    --safe-dim: rgba(63,185,80,0.12);
+    --warning: #d29922;
+    --warning-dim: rgba(210,153,34,0.12);
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --card-shadow-lg: 0 8px 32px rgba(0,0,0,0.3);
+    --card-shadow-xl: 0 20px 60px rgba(0,0,0,0.4);
+    --grid-dot: rgba(255,255,255,0.025);
+    --mockup-bg: #0f1419;
+    --mockup-border: #2d333b;
+    --glow-1: rgba(138,180,248,0.12);
+    --glow-2: rgba(229,83,75,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Dot grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== TOP NAV ===== */
+  .top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: rgba(248,249,250,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-light);
+  }
+  [data-theme="dark"] .top-nav {
+    background: rgba(15,20,25,0.85);
+  }
+  .top-nav-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
+  .top-nav-logo img {
+    height: 32px;
+    width: auto;
+  }
+  [data-theme="dark"] .top-nav-logo img {
+    filter: brightness(0) invert(1);
+  }
+  .top-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ===== THEME TOGGLE ===== */
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--accent); background: var(--accent-glow); }
+  .theme-toggle svg { width: 16px; height: 16px; }
+  .theme-toggle .icon-moon { display: none; }
+  [data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+  [data-theme="dark"] .theme-toggle .icon-moon { display: block; }
+
+  /* ===== CONTAINERS ===== */
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 1; }
+  .container-narrow { max-width: 720px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 1; }
+
+  /* ===== HERO ===== */
+  .hero {
+    padding: 120px 0 0;
+    position: relative;
+    overflow: visible;
+  }
+
+  /* Ambient glow behind hero */
+  .hero-glow {
+    position: absolute;
+    top: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 500px;
+    background: radial-gradient(ellipse, var(--glow-1) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero-content {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    background: var(--accent-glow);
+    border: 1px solid var(--accent-strong);
+    border-radius: 20px;
+    padding: 6px 16px;
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.05s forwards;
+  }
+  .hero-badge svg { width: 14px; height: 14px; }
+
+  .hero-title {
+    font-size: clamp(2.6rem, 5.5vw, 4rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 0.12s forwards;
+  }
+
+  .hero-subtitle {
+    font-size: 1.15rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    max-width: 520px;
+    margin: 0 auto 36px;
+    line-height: 1.7;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 0.2s forwards;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 64px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 0.28s forwards;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 12px 28px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary svg { width: 16px; height: 16px; }
+  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 20px var(--glow-1); }
+  [data-theme="dark"] .btn-primary { color: #0f1419; }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .btn-ghost svg { width: 16px; height: 16px; }
+  .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); background: var(--accent-glow); }
+
+  /* ===== DASHBOARD MOCKUP ===== */
+  .hero-mockup {
+    position: relative;
+    z-index: 2;
+    max-width: 960px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.35s forwards;
+  }
+
+  .mockup-frame {
+    background: var(--mockup-bg);
+    border: 1px solid var(--mockup-border);
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+    box-shadow: var(--card-shadow-xl);
+    animation: mockupFloat 4s ease-in-out infinite 1.5s;
+  }
+
+  .mockup-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--mockup-border);
+  }
+  .mockup-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #3c3c3c;
+  }
+  .mockup-dot:nth-child(1) { background: #ff5f57; }
+  .mockup-dot:nth-child(2) { background: #febc2e; }
+  .mockup-dot:nth-child(3) { background: #28c840; }
+  .mockup-url {
+    flex: 1;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: #8b949e;
+  }
+
+  .mockup-body {
+    padding: 24px;
+    display: flex;
+    gap: 16px;
+    min-height: 280px;
+    background: #0f1419;
+  }
+
+  /* Mini nav rail inside mockup */
+  .mock-nav {
+    width: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 4px;
+  }
+  .mock-nav-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .mock-nav-dot.active { background: rgba(138,180,248,0.12); border-color: rgba(138,180,248,0.25); animation: navPulse 2.5s ease-in-out infinite; }
+
+  .mock-content { flex: 1; }
+
+  /* Mock header */
+  .mock-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .mock-header-title {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #e6edf3;
+    margin-bottom: 2px;
+  }
+  .mock-header-sub {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: #545d68;
+  }
+
+  /* Mock KPI row */
+  .mock-kpis {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .mock-kpi {
+    flex: 1;
+    background: #1c2128;
+    border: 1px solid #2d333b;
+    border-radius: 8px;
+    padding: 12px 10px;
+  }
+  .mock-kpi-value {
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #e6edf3;
+  }
+  .mock-kpi-label {
+    font-size: 0.55rem;
+    color: #545d68;
+    margin-top: 2px;
+  }
+  .mock-kpi:nth-child(1) .mock-kpi-value { color: #e5534b; }
+  .mock-kpi:nth-child(2) .mock-kpi-value { color: #d29922; }
+  .mock-kpi:nth-child(3) .mock-kpi-value { color: #8ab4f8; }
+  .mock-kpi { animation: kpiGlow 3s ease-in-out infinite 2s; }
+  .mock-kpi:nth-child(2) { animation-delay: 2.4s; }
+  .mock-kpi:nth-child(3) { animation-delay: 2.8s; }
+
+  /* Mock chart area */
+  .mock-charts {
+    display: flex;
+    gap: 10px;
+  }
+  .mock-chart-box {
+    flex: 1;
+    background: #1c2128;
+    border: 1px solid #2d333b;
+    border-radius: 8px;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+  }
+  .mock-chart-title {
+    font-size: 0.55rem;
+    color: #545d68;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+  }
+
+  /* CSS-only bar chart */
+  .mock-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 70px;
+  }
+  .mock-bar {
+    flex: 1;
+    border-radius: 2px 2px 0 0;
+    opacity: 0;
+    animation: barGrow 0.6s ease forwards;
+  }
+  .mock-bar:nth-child(1) { height: 65%; background: rgba(138,180,248,0.5); animation-delay: 0.8s; }
+  .mock-bar:nth-child(2) { height: 80%; background: rgba(138,180,248,0.6); animation-delay: 0.9s; }
+  .mock-bar:nth-child(3) { height: 45%; background: rgba(138,180,248,0.4); animation-delay: 1.0s; }
+  .mock-bar:nth-child(4) { height: 100%; background: #8ab4f8; animation-delay: 1.1s; box-shadow: 0 0 8px rgba(138,180,248,0.3); }
+  .mock-bar:nth-child(5) { height: 55%; background: rgba(138,180,248,0.45); animation-delay: 1.2s; }
+  .mock-bar:nth-child(6) { height: 70%; background: rgba(138,180,248,0.55); animation-delay: 1.3s; }
+  .mock-bar:nth-child(7) { height: 35%; background: rgba(138,180,248,0.35); animation-delay: 1.4s; }
+
+  /* CSS-only sparkline (funnel) */
+  .mock-funnel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 4px;
+  }
+  .mock-funnel-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mock-funnel-bar {
+    height: 14px;
+    border-radius: 3px;
+    opacity: 0;
+    animation: slideRight 0.5s ease forwards;
+  }
+  .mock-funnel-row:nth-child(1) .mock-funnel-bar { width: 100%; background: rgba(229,83,75,0.6); animation-delay: 0.9s; }
+  .mock-funnel-row:nth-child(2) .mock-funnel-bar { width: 45%; background: rgba(210,153,34,0.6); animation-delay: 1.05s; }
+  .mock-funnel-row:nth-child(3) .mock-funnel-bar { width: 12%; background: rgba(138,180,248,0.6); animation-delay: 1.2s; }
+  .mock-funnel-label {
+    font-family: var(--mono);
+    font-size: 0.5rem;
+    color: #545d68;
+    white-space: nowrap;
+  }
+
+  .hero-fade {
+    display: none;
+  }
+
+  /* ===== STATS TICKER ===== */
+  .stats-section {
+    padding: 48px 0 80px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border-light);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+  }
+  .stat-cell {
+    background: var(--bg-card);
+    padding: 28px 20px;
+    text-align: center;
+  }
+  .stat-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .stat-cell:nth-child(1) .stat-tag { background: var(--danger-dim); color: var(--danger); }
+  .stat-cell:nth-child(2) .stat-tag { background: var(--warning-dim); color: var(--warning); }
+  .stat-cell:nth-child(3) .stat-tag { background: var(--accent-glow); color: var(--accent); }
+  .stat-cell:nth-child(4) .stat-tag { background: var(--safe-dim); color: var(--safe); }
+  .stat-number {
+    font-family: var(--mono);
+    font-size: clamp(1.5rem, 2.8vw, 2rem);
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+  .stat-cell:nth-child(1) .stat-number { color: var(--danger); }
+  .stat-cell:nth-child(2) .stat-number { color: var(--warning); }
+  .stat-cell:nth-child(3) .stat-number { color: var(--accent); }
+  .stat-cell:nth-child(4) .stat-number { color: var(--safe); }
+  .stat-label {
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  /* ===== FEATURE ROWS (alternating layout) ===== */
+  .feature-row {
+    padding: 80px 0;
+  }
+  .feature-row + .feature-row { padding-top: 0; }
+
+  .feature-row-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .feature-row.reverse .feature-row-inner {
+    direction: rtl;
+  }
+  .feature-row.reverse .feature-row-inner > * {
+    direction: ltr;
+  }
+
+  .feature-text-block {}
+  .feature-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .feature-icon-badge svg { width: 22px; height: 22px; }
+  .feature-icon-badge.red { background: var(--danger-dim); color: var(--danger); }
+  .feature-icon-badge.orange { background: var(--warning-dim); color: var(--warning); }
+  .feature-icon-badge.blue { background: var(--accent-glow); color: var(--accent); }
+  .feature-icon-badge.green { background: var(--safe-dim); color: var(--safe); }
+
+  .feature-text-block h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+  .feature-text-block p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-weight: 300;
+    margin-bottom: 20px;
+  }
+
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .feature-list li svg {
+    width: 16px;
+    height: 16px;
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Feature visual blocks */
+  .feature-visual {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow-lg);
+    position: relative;
+  }
+
+  .fv-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .fv-header-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .fv-header-title {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  .fv-body { padding: 20px; }
+
+  /* Comparison bars visual */
+  .fv-compare-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .fv-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .fv-bar-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    width: 52px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .fv-bar-track {
+    flex: 1;
+    height: 22px;
+    background: var(--bg-alt);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .fv-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    width: 0;
+  }
+  .fv-bar-fill.accent { background: var(--accent); opacity: 0.7; }
+  .fv-bar-fill.danger { background: var(--danger); opacity: 0.7; }
+  .fv-bar-fill.safe { background: var(--safe); opacity: 0.6; }
+  .fv-bar-fill.highlight { background: var(--accent); opacity: 1; }
+  .fv-bar-value {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+  .fv-bar-row.current .fv-bar-label { color: var(--accent); font-weight: 600; }
+
+  /* Evolution sparklines visual */
+  .fv-evo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .fv-evo-card {
+    background: var(--bg-alt);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .fv-evo-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .fv-evo-value {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .fv-evo-value.down { color: var(--safe); }
+  .fv-evo-value.up { color: var(--danger); }
+  .fv-evo-spark {
+    height: 32px;
+    position: relative;
+  }
+  .fv-evo-spark svg { width: 100%; height: 100%; }
+  .fv-evo-spark .spark-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .fv-evo-spark .spark-area { opacity: 0.1; }
+
+  /* Insights visual */
+  .fv-insights {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .fv-insight {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.76rem;
+    line-height: 1.45;
+  }
+  .fv-insight svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
+  .fv-insight.info { background: var(--accent-glow); color: var(--accent); }
+  .fv-insight.warn { background: var(--warning-dim); color: var(--warning); }
+  .fv-insight.danger { background: var(--danger-dim); color: var(--danger); }
+  .fv-insight.good { background: var(--safe-dim); color: var(--safe); }
+
+  /* ===== HOW IT WORKS ===== */
+  .how-section {
+    padding: 80px 0;
+  }
+  .how-section .section-header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .section-header h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .section-header p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+  }
+
+  .how-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .how-step {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .how-step:hover {
+    box-shadow: var(--card-shadow-lg);
+    transform: translateY(-2px);
+    border-color: var(--accent);
+  }
+
+  .how-step-preview {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--border-light);
+    min-height: 140px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .how-step-text {
+    padding: 20px 20px 24px;
+  }
+  .how-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: var(--accent-glow);
+    border: 1px solid var(--accent-strong);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .how-step h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .how-step p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+    line-height: 1.55;
+  }
+
+  /* Step 1: mini search preview */
+  .hw-search-mock {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .hw-search-mock svg { width: 14px; height: 14px; color: var(--text-dim); flex-shrink: 0; }
+  .hw-search-text {
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+  }
+  .hw-search-text .typed {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .hw-search-text .cursor-blink {
+    display: inline-block;
+    width: 1px;
+    height: 12px;
+    background: var(--accent);
+    margin-left: 1px;
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  .hw-dropdown {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--card-shadow-lg);
+    overflow: hidden;
+  }
+  .hw-dropdown-row {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.1s;
+  }
+  .hw-dropdown-row:last-child { border-bottom: none; }
+  .hw-dropdown-row.active {
+    background: var(--accent-glow);
+    color: var(--accent);
+  }
+  .hw-dropdown-code {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 0.65rem;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* Step 2: mini dashboard preview */
+  .hw-dash-mock {
+    background: var(--bg-alt);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .hw-dash-header {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hw-dash-header-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .hw-dash-title {
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    color: var(--text-dim);
+  }
+  .hw-dash-body {
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .hw-kpi-mini {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .hw-kpi-val {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .hw-kpi-lbl {
+    font-size: 0.5rem;
+    color: var(--text-dim);
+  }
+  .hw-dash-chart {
+    grid-column: 1 / -1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 44px;
+  }
+  .hw-minibar {
+    flex: 1;
+    border-radius: 2px 2px 0 0;
+    background: var(--accent);
+    opacity: 0.4;
+  }
+  .hw-minibar.hi { opacity: 0.85; }
+
+  /* Step 3: mini insights preview */
+  .hw-insight-mock {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .hw-insight-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.68rem;
+    line-height: 1.4;
+  }
+  .hw-insight-row svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .hw-insight-row.r-danger { background: var(--danger-dim); color: var(--danger); }
+  .hw-insight-row.r-warn { background: var(--warning-dim); color: var(--warning); }
+  .hw-insight-row.r-good { background: var(--safe-dim); color: var(--safe); }
+  .hw-insight-row.r-info { background: var(--accent-glow); color: var(--accent); }
+  .hw-insight-row strong { font-weight: 700; }
+
+  .hw-compare-mini {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .hw-cmp-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hw-cmp-label {
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .hw-cmp-track {
+    flex: 1;
+    height: 10px;
+    background: var(--bg-alt);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .hw-cmp-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+  .hw-cmp-fill.you { background: var(--accent); opacity: 1; }
+
+  /* ===== VIEWS CARDS ===== */
+  .views-section {
+    padding: 0 0 80px;
+  }
+  .views-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .view-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 28px 24px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .view-card:hover { border-color: var(--accent); box-shadow: var(--card-shadow-lg); transform: translateY(-2px); }
+
+  .view-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .view-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .view-card-icon svg { width: 20px; height: 20px; }
+  .view-card:nth-child(1) .view-card-icon { background: var(--danger-dim); color: var(--danger); }
+  .view-card:nth-child(2) .view-card-icon { background: var(--warning-dim); color: var(--warning); }
+  .view-card:nth-child(3) .view-card-icon { background: var(--accent-glow); color: var(--accent); }
+  .view-card-arrow { color: var(--text-dim); opacity: 0; transform: translateX(-4px); transition: all 0.2s; }
+  .view-card-arrow svg { width: 16px; height: 16px; }
+  .view-card:hover .view-card-arrow { opacity: 1; transform: translateX(0); color: var(--accent); }
+
+  .view-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
+  .view-card p { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.55; font-weight: 300; }
+
+  .view-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .view-card:hover::after { opacity: 1; }
+  .view-card:nth-child(1)::after { background: var(--danger); }
+  .view-card:nth-child(2)::after { background: var(--warning); }
+  .view-card:nth-child(3)::after { background: var(--accent); }
+
+  /* ===== SEARCH SECTION ===== */
+  .search-section {
+    padding: 0 0 80px;
+  }
+  .search-section-inner {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 48px;
+    text-align: center;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .search-section-inner::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, var(--glow-1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .search-section h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+    position: relative;
+  }
+  .search-section .search-desc {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+    margin-bottom: 28px;
+    position: relative;
+  }
+
+  .search-bar-wrap {
+    max-width: 520px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-elevated);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 18px;
+    transition: all 0.25s;
+    position: relative;
+  }
+  .search-bar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .search-bar .s-icon { color: var(--text-dim); flex-shrink: 0; }
+  .search-bar .s-icon svg { width: 18px; height: 18px; }
+  .search-bar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .search-bar input::placeholder { color: var(--text-dim); }
+  .search-bar .s-kbd {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    padding: 3px 7px;
+    border-radius: 4px;
+    background: var(--accent-glow);
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* ===== DATA SOURCE SECTION ===== */
+  .source-section {
+    padding: 0 0 80px;
+  }
+  .source-band {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 24px;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+  }
+  .source-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .source-item svg { width: 16px; height: 16px; }
+  .source-item strong { color: var(--text-secondary); font-weight: 600; }
+
+  /* ===== CTA SECTION ===== */
+  .cta-section {
+    padding: 0 0 100px;
+    text-align: center;
+  }
+  .cta-section h2 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .cta-section p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+    margin-bottom: 28px;
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    padding: 32px 0;
+    border-top: 1px solid var(--border-light);
+    text-align: center;
+  }
+  footer p { font-size: 0.72rem; color: var(--text-dim); line-height: 1.7; }
+  footer a { color: var(--text-secondary); text-decoration: none; transition: color 0.15s; }
+  footer a:hover { color: var(--accent); }
+  .footer-mono { font-family: var(--mono); font-size: 0.63rem; letter-spacing: 0.02em; }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes barGrow {
+    from { opacity: 0; transform: scaleY(0); transform-origin: bottom; }
+    to { opacity: 1; transform: scaleY(1); }
+  }
+  @keyframes slideRight {
+    from { opacity: 0; width: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes mockupFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes navPulse {
+    0%, 100% { background: rgba(138,180,248,0.12); border-color: rgba(138,180,248,0.25); }
+    50% { background: rgba(138,180,248,0.22); border-color: rgba(138,180,248,0.45); }
+  }
+  @keyframes kpiGlow {
+    0%, 100% { border-color: #2d333b; }
+    50% { border-color: rgba(138,180,248,0.25); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-d1 { transition-delay: 0.08s; }
+  .reveal-d2 { transition-delay: 0.16s; }
+  .reveal-d3 { transition-delay: 0.24s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mockup-frame, .mock-kpi, .mock-nav-dot.active { animation: none; }
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    .feature-row-inner { grid-template-columns: 1fr; gap: 32px; }
+    .feature-row.reverse .feature-row-inner { direction: ltr; }
+    .how-steps { grid-template-columns: 1fr; gap: 16px; }
+  }
+  @media (max-width: 768px) {
+    .container, .container-narrow { padding: 0 20px; }
+    .hero { padding: 100px 0 0; }
+    .top-nav { padding: 0 20px; }
+    .hero-actions { flex-direction: column; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .views-grid { grid-template-columns: 1fr; }
+    .source-band { flex-direction: column; gap: 12px; }
+    .search-section-inner { padding: 32px 20px; }
+    .mockup-body { flex-direction: column; }
+    .mock-nav { flex-direction: row; width: 100%; }
+    .fv-evo-grid { grid-template-columns: 1fr; }
+    .theme-toggle { top: 16px; right: 16px; }
+    .mock-kpis { flex-direction: column; }
+  }
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="top-nav">
+  <a href="https://www.ayming.fr" class="top-nav-logo" target="_blank" rel="noopener">
+    <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming">
+  </a>
+  <div class="top-nav-right">
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Changer le theme">
+      <i data-lucide="sun" class="icon-sun"></i>
+      <i data-lucide="moon" class="icon-moon"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <i data-lucide="database"></i>
+        Donnees Ameli 2023
+      </div>
+      <h1 class="hero-title">Sinistralite par Secteur</h1>
+      <p class="hero-subtitle">
+        Accidents du travail, maladies professionnelles et accidents de trajet
+        pour chaque code NAF en France.
+      </p>
+      <div class="hero-actions">
+        <a href="dashboard/index.html" class="btn-primary">
+          Explorer le dashboard
+          <i data-lucide="arrow-right"></i>
+        </a>
+        <a href="#features" class="btn-ghost">
+          Voir les fonctionnalites
+          <i data-lucide="chevron-down"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Dashboard mockup -->
+    <div class="hero-mockup">
+      <div class="mockup-frame">
+        <div class="mockup-titlebar">
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-dot"></div>
+          <div class="mockup-url">sinistralite-par-secteur / dashboard</div>
+        </div>
+        <div class="mockup-body">
+          <div class="mock-nav">
+            <div class="mock-nav-dot active"></div>
+            <div class="mock-nav-dot"></div>
+            <div class="mock-nav-dot"></div>
+            <div class="mock-nav-dot"></div>
+          </div>
+          <div class="mock-content">
+            <div class="mock-header">
+              <div class="mock-header-title">Accidents du Travail</div>
+              <div class="mock-header-sub">4711D &mdash; Commerce de detail de tabac en magasin specialise</div>
+            </div>
+            <div class="mock-kpis">
+              <div class="mock-kpi">
+                <div class="mock-kpi-value">42,7</div>
+                <div class="mock-kpi-label">Indice de frequence</div>
+              </div>
+              <div class="mock-kpi">
+                <div class="mock-kpi-value">1,8</div>
+                <div class="mock-kpi-label">Indice de gravite</div>
+              </div>
+              <div class="mock-kpi">
+                <div class="mock-kpi-value">12 840</div>
+                <div class="mock-kpi-label">Journees perdues</div>
+              </div>
+            </div>
+            <div class="mock-charts">
+              <div class="mock-chart-box">
+                <div class="mock-chart-title">Comparaison sectorielle</div>
+                <div class="mock-bars">
+                  <div class="mock-bar"></div>
+                  <div class="mock-bar"></div>
+                  <div class="mock-bar"></div>
+                  <div class="mock-bar"></div>
+                  <div class="mock-bar"></div>
+                  <div class="mock-bar"></div>
+                  <div class="mock-bar"></div>
+                </div>
+              </div>
+              <div class="mock-chart-box">
+                <div class="mock-chart-title">Repartition sinistres</div>
+                <div class="mock-funnel">
+                  <div class="mock-funnel-row">
+                    <div class="mock-funnel-bar"></div>
+                    <span class="mock-funnel-label">AT 1er reglt.</span>
+                  </div>
+                  <div class="mock-funnel-row">
+                    <div class="mock-funnel-bar"></div>
+                    <span class="mock-funnel-label">Arret 4j+</span>
+                  </div>
+                  <div class="mock-funnel-row">
+                    <div class="mock-funnel-bar"></div>
+                    <span class="mock-funnel-label">IP</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-fade"></div>
+</section>
+
+<!-- ===== STATS ===== -->
+<section class="stats-section">
+  <div class="container">
+    <div class="stats-grid reveal">
+      <div class="stat-cell">
+        <div class="stat-tag">AT</div>
+        <div class="stat-number" data-target="620356">0</div>
+        <div class="stat-label">Accidents du travail</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-tag">MP</div>
+        <div class="stat-number" data-target="47891">0</div>
+        <div class="stat-label">Maladies professionnelles</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-tag">Trajet</div>
+        <div class="stat-number" data-target="89691">0</div>
+        <div class="stat-label">Accidents de trajet</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-tag">NAF</div>
+        <div class="stat-number" data-target="718">0</div>
+        <div class="stat-label">Codes NAF couverts</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURE 1: Comparison ===== -->
+<section class="feature-row" id="features">
+  <div class="container">
+    <div class="feature-row-inner reveal">
+      <div class="feature-text-block">
+        <div class="feature-icon-badge blue"><i data-lucide="bar-chart-3"></i></div>
+        <h2>Comparez votre secteur aux autres</h2>
+        <p>
+          Visualisez l'indice de frequence de votre code NAF face aux autres secteurs de la meme division.
+          Identifiez immediatement si votre secteur est au-dessus ou en dessous de la moyenne nationale.
+        </p>
+        <ul class="feature-list">
+          <li><i data-lucide="check"></i> Comparaison par division NAF2, groupe NAF4, ou sous-classe NAF5</li>
+          <li><i data-lucide="check"></i> Reference nationale en surbrillance</li>
+          <li><i data-lucide="check"></i> Navigation entre secteurs en un clic</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="fv-header">
+          <div class="fv-header-dot" style="background: var(--accent)"></div>
+          <div class="fv-header-title">Comparaison sectorielle &mdash; Division 47</div>
+        </div>
+        <div class="fv-body">
+          <div class="fv-compare-bars" id="compare-bars">
+            <div class="fv-bar-row">
+              <span class="fv-bar-label">4711D</span>
+              <div class="fv-bar-track"><div class="fv-bar-fill accent" data-w="72%"></div><span class="fv-bar-value">42,7</span></div>
+            </div>
+            <div class="fv-bar-row current">
+              <span class="fv-bar-label">4711B</span>
+              <div class="fv-bar-track"><div class="fv-bar-fill highlight" data-w="100%"></div><span class="fv-bar-value">58,3</span></div>
+            </div>
+            <div class="fv-bar-row">
+              <span class="fv-bar-label">4719A</span>
+              <div class="fv-bar-track"><div class="fv-bar-fill accent" data-w="52%"></div><span class="fv-bar-value">30,1</span></div>
+            </div>
+            <div class="fv-bar-row">
+              <span class="fv-bar-label">4719B</span>
+              <div class="fv-bar-track"><div class="fv-bar-fill accent" data-w="41%"></div><span class="fv-bar-value">23,8</span></div>
+            </div>
+            <div class="fv-bar-row">
+              <span class="fv-bar-label">4721Z</span>
+              <div class="fv-bar-track"><div class="fv-bar-fill safe" data-w="28%"></div><span class="fv-bar-value">16,2</span></div>
+            </div>
+            <div class="fv-bar-row">
+              <span class="fv-bar-label">4726Z</span>
+              <div class="fv-bar-track"><div class="fv-bar-fill safe" data-w="19%"></div><span class="fv-bar-value">10,9</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURE 2: Evolution ===== -->
+<section class="feature-row reverse">
+  <div class="container">
+    <div class="feature-row-inner reveal">
+      <div class="feature-text-block">
+        <div class="feature-icon-badge orange"><i data-lucide="trending-up"></i></div>
+        <h2>Suivez l'evolution sur 5 ans</h2>
+        <p>
+          Chaque code NAF dispose d'un historique 2019-2023. Observez les tendances de votre secteur
+          et comparez-les a la dynamique nationale.
+        </p>
+        <ul class="feature-list">
+          <li><i data-lucide="check"></i> Courbes AT, MP et Trajet sur 5 ans</li>
+          <li><i data-lucide="check"></i> Ligne nationale en pointille comme reference</li>
+          <li><i data-lucide="check"></i> Variation en pourcentage premiere/derniere annee</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="fv-header">
+          <div class="fv-header-dot" style="background: var(--warning)"></div>
+          <div class="fv-header-title">Evolution 2019 - 2023</div>
+        </div>
+        <div class="fv-body">
+          <div class="fv-evo-grid">
+            <div class="fv-evo-card">
+              <div class="fv-evo-label">Accidents du travail</div>
+              <div class="fv-evo-value down">-12,4%</div>
+              <div class="fv-evo-spark">
+                <svg viewBox="0 0 140 32" preserveAspectRatio="none">
+                  <path class="spark-area" d="M0,8 L28,12 L56,6 L84,18 L112,14 L140,20 L140,32 L0,32 Z" fill="var(--safe)"/>
+                  <path class="spark-line" d="M0,8 L28,12 L56,6 L84,18 L112,14 L140,20" stroke="var(--safe)"/>
+                </svg>
+              </div>
+            </div>
+            <div class="fv-evo-card">
+              <div class="fv-evo-label">Indice de frequence</div>
+              <div class="fv-evo-value down">-8,7%</div>
+              <div class="fv-evo-spark">
+                <svg viewBox="0 0 140 32" preserveAspectRatio="none">
+                  <path class="spark-area" d="M0,6 L28,10 L56,4 L84,14 L112,16 L140,18 L140,32 L0,32 Z" fill="var(--safe)"/>
+                  <path class="spark-line" d="M0,6 L28,10 L56,4 L84,14 L112,16 L140,18" stroke="var(--safe)"/>
+                </svg>
+              </div>
+            </div>
+            <div class="fv-evo-card">
+              <div class="fv-evo-label">Maladies Pro.</div>
+              <div class="fv-evo-value up">+6,2%</div>
+              <div class="fv-evo-spark">
+                <svg viewBox="0 0 140 32" preserveAspectRatio="none">
+                  <path class="spark-area" d="M0,22 L28,18 L56,20 L84,14 L112,10 L140,8 L140,32 L0,32 Z" fill="var(--danger)"/>
+                  <path class="spark-line" d="M0,22 L28,18 L56,20 L84,14 L112,10 L140,8" stroke="var(--danger)"/>
+                </svg>
+              </div>
+            </div>
+            <div class="fv-evo-card">
+              <div class="fv-evo-label">Trajet</div>
+              <div class="fv-evo-value down">-5,1%</div>
+              <div class="fv-evo-spark">
+                <svg viewBox="0 0 140 32" preserveAspectRatio="none">
+                  <path class="spark-area" d="M0,10 L28,8 L56,16 L84,12 L112,14 L140,16 L140,32 L0,32 Z" fill="var(--safe)"/>
+                  <path class="spark-line" d="M0,10 L28,8 L56,16 L84,12 L112,14 L140,16" stroke="var(--safe)"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURE 3: Insights ===== -->
+<section class="feature-row">
+  <div class="container">
+    <div class="feature-row-inner reveal">
+      <div class="feature-text-block">
+        <div class="feature-icon-badge green"><i data-lucide="lightbulb"></i></div>
+        <h2>Des insights, pas juste des chiffres</h2>
+        <p>
+          Le dashboard analyse automatiquement chaque secteur et remonte les anomalies,
+          les ecarts significatifs et les tendances preoccupantes. Vous ne manquez rien.
+        </p>
+        <ul class="feature-list">
+          <li><i data-lucide="check"></i> Alertes sur les hausses d'indice de frequence (+15%)</li>
+          <li><i data-lucide="check"></i> Detection des pics de gravite</li>
+          <li><i data-lucide="check"></i> Signaux positifs : baisses significatives</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="fv-header">
+          <div class="fv-header-dot" style="background: var(--safe)"></div>
+          <div class="fv-header-title">Insights &mdash; 4711B</div>
+        </div>
+        <div class="fv-body">
+          <div class="fv-insights">
+            <div class="fv-insight danger">
+              <i data-lucide="alert-triangle"></i>
+              <span>Indice de frequence <strong>2,3x au-dessus</strong> de la moyenne nationale (25,1). Secteur a risque eleve.</span>
+            </div>
+            <div class="fv-insight warn">
+              <i data-lucide="trending-up"></i>
+              <span>Gravite en <strong>hausse de 22%</strong> depuis 2021. Tendance a surveiller.</span>
+            </div>
+            <div class="fv-insight good">
+              <i data-lucide="trending-down"></i>
+              <span>Accidents de trajet en <strong>baisse de 18%</strong> sur 5 ans. Amelioration confirmee.</span>
+            </div>
+            <div class="fv-insight info">
+              <i data-lucide="users"></i>
+              <span>Population <strong>62% masculine</strong>. Tranche 30-49 ans la plus touchee (48% des AT).</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="how-section">
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>Simple, immediat, complet</h2>
+      <p>Trois etapes pour acceder aux statistiques de votre secteur</p>
+    </div>
+    <div class="how-steps reveal">
+
+      <!-- Step 1: Search -->
+      <div class="how-step">
+        <div class="how-step-preview">
+          <div class="hw-search-mock">
+            <i data-lucide="search"></i>
+            <div class="hw-search-text"><span class="typed">restaura</span><span class="cursor-blink"></span></div>
+          </div>
+          <div class="hw-dropdown">
+            <div class="hw-dropdown-row active">
+              <span class="hw-dropdown-code">5610A</span>
+              Restauration traditionnelle
+            </div>
+            <div class="hw-dropdown-row">
+              <span class="hw-dropdown-code">5610C</span>
+              Restauration rapide
+            </div>
+            <div class="hw-dropdown-row">
+              <span class="hw-dropdown-code">5629A</span>
+              Restauration collective
+            </div>
+          </div>
+        </div>
+        <div class="how-step-text">
+          <div class="how-step-num">1</div>
+          <h3>Cherchez votre secteur</h3>
+          <p>Tapez un code NAF ou un mot-cle. L'autocompletion vous guide vers le bon code parmi 718 secteurs.</p>
+        </div>
+      </div>
+
+      <!-- Step 2: Explore -->
+      <div class="how-step">
+        <div class="how-step-preview">
+          <div class="hw-dash-mock">
+            <div class="hw-dash-header">
+              <div class="hw-dash-header-dot" style="background: var(--danger)"></div>
+              <div class="hw-dash-title">5610A &mdash; Restauration traditionnelle</div>
+            </div>
+            <div class="hw-dash-body">
+              <div class="hw-kpi-mini">
+                <div class="hw-kpi-val" style="color: var(--danger)">52,3</div>
+                <div class="hw-kpi-lbl">Ind. frequence</div>
+              </div>
+              <div class="hw-kpi-mini">
+                <div class="hw-kpi-val" style="color: var(--warning)">2,1</div>
+                <div class="hw-kpi-lbl">Ind. gravite</div>
+              </div>
+              <div class="hw-kpi-mini">
+                <div class="hw-kpi-val" style="color: var(--accent)">8 420</div>
+                <div class="hw-kpi-lbl">J. perdues</div>
+              </div>
+              <div class="hw-dash-chart">
+                <div class="hw-minibar" style="height: 55%"></div>
+                <div class="hw-minibar" style="height: 70%"></div>
+                <div class="hw-minibar" style="height: 40%"></div>
+                <div class="hw-minibar hi" style="height: 90%"></div>
+                <div class="hw-minibar" style="height: 60%"></div>
+                <div class="hw-minibar" style="height: 75%"></div>
+                <div class="hw-minibar" style="height: 30%"></div>
+                <div class="hw-minibar" style="height: 50%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="how-step-text">
+          <div class="how-step-num">2</div>
+          <h3>Explorez les donnees</h3>
+          <p>KPIs, graphiques de comparaison, evolution 2019-2023, demographics. Tout pour AT, MP et Trajet.</p>
+        </div>
+      </div>
+
+      <!-- Step 3: Analyze -->
+      <div class="how-step">
+        <div class="how-step-preview">
+          <div class="hw-insight-mock">
+            <div class="hw-insight-row r-danger">
+              <i data-lucide="alert-triangle"></i>
+              <span>IF <strong>2,1x</strong> au-dessus de la moyenne nationale</span>
+            </div>
+            <div class="hw-insight-row r-good">
+              <i data-lucide="trending-down"></i>
+              <span>Trajet en <strong>baisse de 18%</strong> sur 5 ans</span>
+            </div>
+            <div class="hw-insight-row r-info">
+              <i data-lucide="users"></i>
+              <span>Tranche <strong>25-34 ans</strong> : 38% des AT</span>
+            </div>
+          </div>
+          <div class="hw-compare-mini">
+            <div class="hw-cmp-row">
+              <span class="hw-cmp-label">5610A</span>
+              <div class="hw-cmp-track"><div class="hw-cmp-fill you" style="width: 82%"></div></div>
+            </div>
+            <div class="hw-cmp-row">
+              <span class="hw-cmp-label">5610C</span>
+              <div class="hw-cmp-track"><div class="hw-cmp-fill" style="width: 58%"></div></div>
+            </div>
+            <div class="hw-cmp-row">
+              <span class="hw-cmp-label">Nat.</span>
+              <div class="hw-cmp-track"><div class="hw-cmp-fill" style="width: 40%; background: var(--text-dim)"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="how-step-text">
+          <div class="how-step-num">3</div>
+          <h3>Comparez et analysez</h3>
+          <p>Les insights automatiques signalent les ecarts. Positionnez votre secteur face aux autres.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== VIEWS ===== -->
+<section class="views-section">
+  <div class="container">
+    <div class="section-header reveal" style="margin-bottom: 32px;">
+      <h2>Trois angles de vue</h2>
+      <p>Chaque type de risque professionnel a sa propre vue dediee</p>
+    </div>
+    <div class="views-grid">
+      <a href="dashboard/index.html#at" class="view-card reveal reveal-d1">
+        <div class="view-card-top">
+          <div class="view-card-icon"><i data-lucide="hard-hat"></i></div>
+          <div class="view-card-arrow"><i data-lucide="arrow-right"></i></div>
+        </div>
+        <h3>Accidents du Travail</h3>
+        <p>IF, gravite, deces, journees perdues, demographics par age et sexe, evolution 2019-2023.</p>
+      </a>
+      <a href="dashboard/index.html#mp" class="view-card reveal reveal-d2">
+        <div class="view-card-top">
+          <div class="view-card-icon"><i data-lucide="stethoscope"></i></div>
+          <div class="view-card-arrow"><i data-lucide="arrow-right"></i></div>
+        </div>
+        <h3>Maladies Professionnelles</h3>
+        <p>TMS, risques chimiques, cancers, incapacites permanentes. Repartition par cause.</p>
+      </a>
+      <a href="dashboard/index.html#trajet" class="view-card reveal reveal-d3">
+        <div class="view-card-top">
+          <div class="view-card-icon"><i data-lucide="route"></i></div>
+          <div class="view-card-arrow"><i data-lucide="arrow-right"></i></div>
+        </div>
+        <h3>Accidents de Trajet</h3>
+        <p>Sinistres domicile-travail, indice de frequence trajet, evolution pluriannuelle.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SEARCH ===== -->
+<section class="search-section">
+  <div class="container">
+    <div class="search-section-inner reveal">
+      <h2>Trouvez votre code NAF</h2>
+      <p class="search-desc">Tapez un code (ex: 4711D) ou un mot-cle (ex: batiment, restauration, transport)</p>
+      <div class="search-bar-wrap">
+        <form class="search-bar" onsubmit="navigateSearch(event)">
+          <span class="s-icon"><i data-lucide="search"></i></span>
+          <input type="text" id="search-input" placeholder="Rechercher un code NAF ou un secteur..." autocomplete="off">
+          <span class="s-kbd">/</span>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DATA SOURCE ===== -->
+<section class="source-section">
+  <div class="container">
+    <div class="source-band reveal">
+      <div class="source-item">
+        <i data-lucide="shield-check"></i>
+        <span>Source : <strong>Ameli / CNAM</strong></span>
+      </div>
+      <div class="source-item">
+        <i data-lucide="calendar"></i>
+        <span>Annee : <strong>2023</strong></span>
+      </div>
+      <div class="source-item">
+        <i data-lucide="layers"></i>
+        <span>Nomenclature : <strong>NAF Rev. 2</strong></span>
+      </div>
+      <div class="source-item">
+        <i data-lucide="building-2"></i>
+        <span>Perimetre : <strong>Regime general</strong></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="cta-section">
+  <div class="container reveal">
+    <h2>Pret a explorer ?</h2>
+    <p>Toutes les statistiques de sinistralite, pour chaque secteur, en un seul endroit.</p>
+    <a href="dashboard/index.html" class="btn-primary" style="font-size: 0.95rem; padding: 14px 36px;">
+      Ouvrir le dashboard
+      <i data-lucide="arrow-right"></i>
+    </a>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    <p>
+      Donnees : <a href="https://assurance-maladie.ameli.fr/etudes-et-donnees/risque-professionnel-secteur-activite-702" target="_blank" rel="noopener">Assurance Maladie - Risque professionnel par secteur d'activite</a>
+    </p>
+    <p class="footer-mono" style="margin-top: 6px;">CTN A-I &middot; Regime general &middot; France metropolitaine + DOM</p>
+  </div>
+</footer>
+
+<script>
+  lucide.createIcons();
+
+  // Theme
+  function toggleTheme() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    localStorage.setItem('bpo-theme', isDark ? 'light' : 'dark');
+    lucide.createIcons();
+  }
+  const saved = localStorage.getItem('bpo-theme');
+  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+
+  // Search
+  function navigateSearch(e) {
+    e.preventDefault();
+    const q = document.getElementById('search-input').value.trim();
+    window.location.href = q
+      ? 'dashboard/index.html#at/' + encodeURIComponent(q)
+      : 'dashboard/index.html';
+  }
+
+  // Counter animation
+  function animateCounters() {
+    document.querySelectorAll('.stat-number[data-target]').forEach(el => {
+      if (el.dataset.animated) return;
+      el.dataset.animated = '1';
+      const target = parseInt(el.dataset.target, 10);
+      const duration = 1400;
+      const start = performance.now();
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(eased * target).toLocaleString('fr-FR');
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  // Animated comparison bars
+  function animateBars() {
+    document.querySelectorAll('.fv-bar-fill[data-w]').forEach(el => {
+      if (el.dataset.animated) return;
+      el.dataset.animated = '1';
+      el.style.width = el.dataset.w;
+    });
+  }
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        if (entry.target.querySelector('.stat-number')) animateCounters();
+        if (entry.target.querySelector('.fv-bar-fill')) animateBars();
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Keyboard shortcut: / to focus search
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      e.preventDefault();
+      document.getElementById('search-input').focus();
+      document.getElementById('search-input').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+</script>
+
+</body>
+</html>
