@@ -221,12 +221,12 @@ def parse_synthesis(page_text: str) -> dict:
 
 
 def parse_sex(cell_text: str) -> dict[str, int]:
-    """Extract AT counts by sex from page 2 table cell text."""
+    """Extract counts by sex from table cell text (AT page 2 or MP page 3)."""
     result = {}
 
     for label in ("masculin", "féminin"):
         pattern = re.compile(
-            r"\d\s+" + label + r"\s+([\d\s]+?)$", re.MULTILINE
+            r"\d\s+" + label + r"\s+([\d\s]+?)$", re.MULTILINE | re.IGNORECASE
         )
         m = pattern.search(cell_text)
         if not m:
@@ -319,6 +319,17 @@ def parse_one_pdf(path: str | Path) -> dict | None:
             sex = parse_sex(cell_text)
             age = parse_age(cell_text)
 
+        # Page 3: MP details (sex + age) - same format, different table index
+        mp_sex = {}
+        mp_age = {}
+        if len(pdf.pages) >= 3:
+            p3 = pdf.pages[2]
+            mp_tables = p3.extract_tables()
+            if len(mp_tables) >= 2 and len(mp_tables[1]) >= 2 and mp_tables[1][1][0]:
+                mp_cell_text = mp_tables[1][1][0]
+                mp_sex = parse_sex(mp_cell_text)
+                mp_age = parse_age(mp_cell_text)
+
         return {
             "synthesis": synthesis,
             "at_yearly": at_yearly,
@@ -326,6 +337,8 @@ def parse_one_pdf(path: str | Path) -> dict | None:
             "mp_yearly": mp_yearly,
             "sex": sex,
             "age": age,
+            "mp_sex": mp_sex,
+            "mp_age": mp_age,
         }
     except Exception as e:
         print(f"  ERROR parsing {path}: {e}")

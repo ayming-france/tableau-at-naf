@@ -710,38 +710,54 @@ def validate(data, label, spot_code="4711D"):
 AGE_GROUPS = ["<20", "20-24", "25-29", "30-34", "35-39", "40-49", "50-59", "60-64", "65+"]
 
 
-def merge_pdf_data(at_data, pdf_data):
-    """Merge PDF-extracted demographics into AT data at all levels."""
+def merge_pdf_data(at_data, pdf_data, mp_data=None):
+    """Merge PDF-extracted demographics into AT (and optionally MP) data at all levels."""
     # NAF5 level: direct merge
     for code, parsed in pdf_data.items():
-        if code not in at_data["by_naf5"]:
-            continue
-        entry = at_data["by_naf5"][code]
-        if parsed["sex"]:
-            entry["demographics"] = {"sex": parsed["sex"], "age": parsed["age"]}
-        # Trajet count from synthesis
-        trajet = parsed.get("synthesis", {}).get("trajet")
-        if trajet:
-            entry["trajet"] = trajet
+        if code in at_data["by_naf5"]:
+            entry = at_data["by_naf5"][code]
+            if parsed["sex"]:
+                entry["demographics"] = {"sex": parsed["sex"], "age": parsed["age"]}
+            trajet = parsed.get("synthesis", {}).get("trajet")
+            if trajet:
+                entry["trajet"] = trajet
+
+        # MP demographics from page 3
+        if mp_data and code in mp_data["by_naf5"]:
+            mp_sex = parsed.get("mp_sex", {})
+            mp_age = parsed.get("mp_age", {})
+            if mp_sex:
+                mp_data["by_naf5"][code]["demographics"] = {"sex": mp_sex, "age": mp_age}
 
     # NAF4/NAF2: aggregate demographics by summing NAF5 counts
     for level, key_fn in [("by_naf4", lambda c: c[:4]), ("by_naf2", lambda c: c[:2])]:
-        agg = defaultdict(lambda: {
+        at_agg = defaultdict(lambda: {
             "sex": defaultdict(int), "age": defaultdict(int),
             "trajet_count": 0,
+        })
+        mp_agg = defaultdict(lambda: {
+            "sex": defaultdict(int), "age": defaultdict(int),
         })
         for code, parsed in pdf_data.items():
             key = key_fn(code)
             if parsed["sex"]:
                 for s, v in parsed["sex"].items():
-                    agg[key]["sex"][s] += v
+                    at_agg[key]["sex"][s] += v
                 for a, v in parsed["age"].items():
-                    agg[key]["age"][a] += v
+                    at_agg[key]["age"][a] += v
             trajet = parsed.get("synthesis", {}).get("trajet")
             if trajet:
-                agg[key]["trajet_count"] += trajet["count"]
+                at_agg[key]["trajet_count"] += trajet["count"]
 
-        for code, data in agg.items():
+            mp_sex = parsed.get("mp_sex", {})
+            mp_age = parsed.get("mp_age", {})
+            if mp_sex:
+                for s, v in mp_sex.items():
+                    mp_agg[key]["sex"][s] += v
+                for a, v in mp_age.items():
+                    mp_agg[key]["age"][a] += v
+
+        for code, data in at_agg.items():
             if code not in at_data[level]:
                 continue
             entry = at_data[level][code]
@@ -752,10 +768,22 @@ def merge_pdf_data(at_data, pdf_data):
                 }
             entry["trajet"] = {"count": data["trajet_count"]}
 
+        if mp_data:
+            for code, data in mp_agg.items():
+                if code not in mp_data[level]:
+                    continue
+                if data["sex"]:
+                    mp_data[level][code]["demographics"] = {
+                        "sex": dict(data["sex"]),
+                        "age": dict(data["age"]),
+                    }
+
     # National level: sum all NAF5
     nat_sex = defaultdict(int)
     nat_age = defaultdict(int)
     nat_trajet = 0
+    mp_nat_sex = defaultdict(int)
+    mp_nat_age = defaultdict(int)
     for parsed in pdf_data.values():
         if parsed["sex"]:
             for s, v in parsed["sex"].items():
@@ -766,11 +794,25 @@ def merge_pdf_data(at_data, pdf_data):
         if trajet:
             nat_trajet += trajet["count"]
 
+        mp_sex = parsed.get("mp_sex", {})
+        mp_age = parsed.get("mp_age", {})
+        if mp_sex:
+            for s, v in mp_sex.items():
+                mp_nat_sex[s] += v
+            for a, v in mp_age.items():
+                mp_nat_age[a] += v
+
     at_data["meta"]["national"]["demographics"] = {
         "sex": dict(nat_sex),
         "age": dict(nat_age),
     }
     at_data["meta"]["national"]["trajet"] = {"count": nat_trajet}
+
+    if mp_data:
+        mp_data["meta"]["national"]["demographics"] = {
+            "sex": dict(mp_nat_sex),
+            "age": dict(mp_nat_age),
+        }
 
 
 # ═══════════════════════════════════════════
@@ -1068,22 +1110,7 @@ def main():
     print("3. Build...")
     at_data = build_at_data(at_rows)
 
-    # PDF data (shared across AT, MP, Trajet pipelines)
-    print("4. PDF parsing...")
-    from parse_pdf import parse_all_pdfs
-    pdf_data = parse_all_pdfs()
-    merge_pdf_data(at_data, pdf_data)
-
-    # AT yearly evolution (5 years from PDF)
-    print("5. Yearly evolution (PDF 5-year)...")
-    at_yearly = build_yearly_from_pdf(pdf_data, "at_yearly", base_data=at_data)
-    merge_yearly_into_data(at_data, at_yearly)
-
-    print("6. Write...")
-    write_outputs(at_data, AT_JSON_PATH, AT_PKL_PATH, "AT")
-    validate(at_data, "AT")
-
-    # ── MP ──
+    # ── MP (build before PDF merge so merge_pdf_data can populate both) ──
     print("\n=== MP Pipeline ===")
     print("1. Download...")
     download_xlsx(MP_XLSX_PATH, MP_XLSX_URL)
@@ -1092,11 +1119,26 @@ def main():
     print("3. Build...")
     mp_data = build_mp_data(mp_rows)
 
+    # PDF data (shared across AT, MP, Trajet pipelines)
+    print("\n=== PDF Parsing ===")
+    from parse_pdf import parse_all_pdfs
+    pdf_data = parse_all_pdfs()
+    merge_pdf_data(at_data, pdf_data, mp_data=mp_data)
+
+    # AT yearly evolution (5 years from PDF)
+    print("\n=== AT Yearly ===")
+    at_yearly = build_yearly_from_pdf(pdf_data, "at_yearly", base_data=at_data)
+    merge_yearly_into_data(at_data, at_yearly)
+
+    print("Write AT...")
+    write_outputs(at_data, AT_JSON_PATH, AT_PKL_PATH, "AT")
+    validate(at_data, "AT")
+
     # MP yearly evolution (5 years from PDF, using AT workforce for IF)
-    print("4. Yearly evolution (PDF 5-year)...")
+    print("\n=== MP Yearly ===")
     mp_yearly = build_yearly_from_pdf(pdf_data, "mp_yearly", base_data=at_data)
     merge_yearly_into_data(mp_data, mp_yearly)
-    print("5. Write...")
+    print("Write MP...")
     write_outputs(mp_data, MP_JSON_PATH, MP_PKL_PATH, "MP")
     validate(mp_data, "MP")
 

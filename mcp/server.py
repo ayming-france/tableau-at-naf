@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MCP server for Ameli AT + MP statistics by NAF sector code (France, 2023)."""
+"""MCP server for Ameli AT + MP + Trajet statistics by NAF sector code (France, 2023)."""
 
 import pickle
 from pathlib import Path
@@ -8,10 +8,11 @@ from mcp.server.fastmcp import FastMCP
 DATA_DIR = Path(__file__).parent.parent / "data"
 AT_DATA_PATH = DATA_DIR / "at-data.pkl"
 MP_DATA_PATH = DATA_DIR / "mp-data.pkl"
+TRAJET_DATA_PATH = DATA_DIR / "trajet-data.pkl"
 
 mcp = FastMCP("bpo", instructions=(
-    "Accidents du Travail and Maladies Professionnelles statistics by NAF sector code (France, 2023). "
-    "Use at_search_naf/mp_search_naf to find a NAF code, then at_get_stats/mp_get_stats for full stats."
+    "Accidents du Travail, Maladies Professionnelles, and Accidents de Trajet statistics by NAF sector code (France, 2023). "
+    "Use at_search_naf/mp_search_naf/trajet_search_naf to find a NAF code, then at_get_stats/mp_get_stats/trajet_get_stats for full stats."
 ))
 
 # Load data at import time
@@ -20,6 +21,9 @@ with open(AT_DATA_PATH, "rb") as f:
 
 with open(MP_DATA_PATH, "rb") as f:
     MP_DATA = pickle.load(f)
+
+with open(TRAJET_DATA_PATH, "rb") as f:
+    TRAJET_DATA = pickle.load(f)
 
 
 def _detect_level(code: str, data: dict) -> str:
@@ -70,8 +74,9 @@ def _get_stats(naf_code: str, compare_national: bool, data: dict) -> dict:
         "level": level,
         "libelle": entry["libelle"],
         "stats": entry["stats"],
-        "risk_causes": entry["risk_causes"],
     }
+    if "risk_causes" in entry:
+        result["risk_causes"] = entry["risk_causes"]
 
     if level == "naf5":
         result["naf4"] = entry.get("naf4", "")
@@ -83,18 +88,20 @@ def _get_stats(naf_code: str, compare_national: bool, data: dict) -> dict:
     if compare_national:
         nat = data["meta"]["national"]
         s = entry["stats"]
-        result["vs_national"] = {
+        vs = {
             "indice_frequence": {
                 "secteur": s["indice_frequence"],
                 "national": nat["indice_frequence"],
                 "ecart_pct": round((s["indice_frequence"] - nat["indice_frequence"]) / nat["indice_frequence"] * 100, 1) if nat["indice_frequence"] > 0 else 0,
             },
-            "taux_gravite": {
+        }
+        if "taux_gravite" in s and "taux_gravite" in nat:
+            vs["taux_gravite"] = {
                 "secteur": s["taux_gravite"],
                 "national": nat["taux_gravite"],
                 "ecart_pct": round((s["taux_gravite"] - nat["taux_gravite"]) / nat["taux_gravite"] * 100, 1) if nat["taux_gravite"] > 0 else 0,
-            },
-        }
+            }
+        result["vs_national"] = vs
 
     return result
 
@@ -145,6 +152,30 @@ def mp_get_stats(naf_code: str, compare_national: bool = True) -> dict:
         compare_national: Include national averages for comparison
     """
     return _get_stats(naf_code, compare_national, MP_DATA)
+
+
+# ── Trajet tools ──
+
+@mcp.tool()
+def trajet_search_naf(query: str, level: str = "") -> list[dict]:
+    """Search NAF codes in Trajet (Accidents de Trajet) data by code or activity name.
+
+    Args:
+        query: Search term (NAF code or activity keyword, e.g. "supermarche" or "4711")
+        level: Filter by level: "naf5", "naf4", "naf2", or empty for all
+    """
+    return _search_naf(query, level, TRAJET_DATA)
+
+
+@mcp.tool()
+def trajet_get_stats(naf_code: str, compare_national: bool = True) -> dict:
+    """Get full Trajet (Accidents de Trajet) statistics for a NAF code.
+
+    Args:
+        naf_code: NAF code (e.g. "4711D" for NAF5, "4711" for NAF4, "47" for NAF2)
+        compare_national: Include national averages for comparison
+    """
+    return _get_stats(naf_code, compare_national, TRAJET_DATA)
 
 
 if __name__ == "__main__":

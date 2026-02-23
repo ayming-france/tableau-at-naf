@@ -1476,6 +1476,13 @@
           <div class="evo-card"><div class="evo-chart-wrap"><canvas id="mp-evoIF"></canvas></div></div>
         </div>
       </div>
+      <div class="demo-section" id="mp-demoSection" style="display:none">
+        <h3 class="evo-title">Demographie des MP</h3>
+        <div class="demo-grid">
+          <div class="demo-card"><div class="demo-chart-wrap"><canvas id="mp-demoSex"></canvas></div></div>
+          <div class="demo-card"><div class="demo-chart-wrap"><canvas id="mp-demoAge"></canvas></div></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1649,7 +1656,7 @@
   let activeView = 'at';
   const viewState = {
     at: { code: null, level: 'naf2', causesChart: null, compChart: null, evoCharts: [], demoCharts: [], acIndex: -1 },
-    mp: { code: null, level: 'naf2', causesChart: null, compChart: null, evoCharts: [], acIndex: -1 },
+    mp: { code: null, level: 'naf2', causesChart: null, compChart: null, evoCharts: [], demoCharts: [], acIndex: -1 },
     trajet: { code: null, level: 'naf2', causesChart: null, compChart: null, evoCharts: [], acIndex: -1 },
   };
 
@@ -2063,7 +2070,7 @@
     renderFunnelChart(viewId, s, cfg);
     renderComparisonChart(viewId, code, level);
     renderEvolutionCharts(viewId, entry, level);
-    if (viewId === 'at') renderDemographics(viewId, entry);
+    renderDemographics(viewId, entry);
   }
 
   // ── Insights ──
