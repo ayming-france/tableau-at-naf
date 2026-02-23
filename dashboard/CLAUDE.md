@@ -47,7 +47,7 @@ Each view is a `<div class="view">` with its own search, KPIs, charts, and funne
 
 ### Navigation
 
-GA4-style nav-rail (vertical sidebar) with icon buttons for each view. Theme toggle (light/dark) at the bottom. View switching updates: header title/subtitle, footer source, hash URL, active view container.
+Top navbar (Ayming logo + dark mode toggle). GA4-style nav-rail (vertical sidebar) with icon buttons for each view. View switching updates: header title/subtitle, footer source, hash URL, active view container. Landing page (`landing.html`) serves as the entry point.
 
 ### URL Routing
 
@@ -61,7 +61,7 @@ GA4-style nav-rail (vertical sidebar) with icon buttons for each view. Theme tog
 
 ### MCP Server (`mcp/server.py`)
 
-Server name: `bpo`. Loads both `at-data.pkl` and `mp-data.pkl`.
+Server name: `bpo`. Loads `at-data.pkl`, `mp-data.pkl`, and `trajet-data.pkl`.
 
 | Tool | Description |
 |------|-------------|
@@ -69,6 +69,8 @@ Server name: `bpo`. Loads both `at-data.pkl` and `mp-data.pkl`.
 | `at_get_stats(naf_code, compare_national)` | Full AT stats for a NAF code |
 | `mp_search_naf(query, level)` | Search MP data by code/keyword |
 | `mp_get_stats(naf_code, compare_national)` | Full MP stats for a NAF code |
+| `trajet_search_naf(query, level)` | Search Trajet data by code/keyword |
+| `trajet_get_stats(naf_code, compare_national)` | Full Trajet stats for a NAF code |
 
 ## Comparison Chart Rules
 
@@ -132,24 +134,25 @@ Per-NAF PDF fiches from Ameli (`NAF_{NAF5}.pdf`), available locally at `~/Deskto
 Extracts from each PDF using pdfplumber:
 - **Page 1 (Synthesis)**: AT/Trajet/MP counts + evolution %, 5-year yearly data (2019-2023) for all three risk types
 - **Page 2 (AT details)**: sex breakdown (masculin/feminin AT counts), age breakdown (9 groups: <20, 20-24, 25-29, 30-34, 35-39, 40-49, 50-59, 60-64, 65+)
+- **Page 3 (MP details)**: sex breakdown + age breakdown (same format as AT, case-insensitive parsing)
 
 Number parsing uses French thousands-separator rules with domain-specific max-value constraints to disambiguate column values from thousands groups.
 
-Output merged into `at-data.json` at all levels:
+Output merged into `at-data.json` and `mp-data.json` at all levels:
 - **NAF5**: `demographics: {sex, age}`, `trajet: {count, evolution_pct}`
 - **NAF4/NAF2**: aggregated by summing (trajet has no evolution at aggregate level)
 - **National**: `meta.national.demographics`, `meta.national.trajet`
 
-28 NAF codes with 0 AT have no demographics data (expected).
+28 NAF codes with 0 AT have no demographics data (expected). 700/729 NAF5 codes have MP demographics.
 
-### Dashboard (AT view only)
+### Dashboard (AT + MP views)
 
 **Unified KPI grid** (all 3 views): events, IF, deces, journees perdues, nouvelles IP, salaries. Each KPI has a help tooltip via `KPI_HELP`.
 
-**Demographics section** (AT view only, below evolution charts):
+**Demographics section** (AT and MP views, below evolution charts):
 - Sex doughnut chart (blue/red, legend with counts and %)
 - Age horizontal bar chart (9 groups, indigo gradient)
-- Charts managed via `viewState.at.demoCharts[]`
+- Charts managed via `viewState[viewId].demoCharts[]`
 - Section hidden when no demographics data available
 
 ## Tech
