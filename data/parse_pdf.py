@@ -244,36 +244,34 @@ def parse_sex(cell_text: str) -> dict[str, int]:
 def parse_age(cell_text: str) -> dict[str, int]:
     """Extract AT counts by age group from page 2 table cell text.
 
-    PDF has: <20, 20-24, 25-29, 30-34, 35-39, 40-49, 50-59, 60-64, 65+
-    We aggregate to: 15-19, 20-29, 30-39, 40-49, 50-59, 60+
+    Uses the original 9 age groups from the PDF.
     """
-    # Map PDF age labels to our output groups
     age_patterns = [
-        ("15-19", [r"Moins de 20 ans"]),
-        ("20-29", [r"de 20 [àa] 24 ans", r"de 25 [àa] 29 ans"]),
-        ("30-39", [r"de 30 [àa] 34 ans", r"de 35 [àa] 39 ans"]),
-        ("40-49", [r"de 40 [àa] 49 ans"]),
-        ("50-59", [r"de 50 [àa] 59 ans"]),
-        ("60+", [r"de 60 [àa] 64 ans", r"65 ans et plus"]),
+        ("<20", r"Moins de 20 ans"),
+        ("20-24", r"de 20 [àa] 24 ans"),
+        ("25-29", r"de 25 [àa] 29 ans"),
+        ("30-34", r"de 30 [àa] 34 ans"),
+        ("35-39", r"de 35 [àa] 39 ans"),
+        ("40-49", r"de 40 [àa] 49 ans"),
+        ("50-59", r"de 50 [àa] 59 ans"),
+        ("60-64", r"de 60 [àa] 64 ans"),
+        ("65+", r"65 ans et plus"),
     ]
 
     result = {}
-    for group_name, patterns in age_patterns:
-        total = 0
-        for pattern in patterns:
-            # Match row: row_number label numbers...
-            m = re.search(
-                r"\d+\s*" + pattern + r"\s+([\d\s]+?)$",
-                cell_text,
-                re.MULTILINE,
-            )
-            if m:
-                nums_text = m.group(1).strip()
-                digit_groups = re.findall(r"\d+", nums_text)
-                values = parse_table_row_numbers(digit_groups, ROW_MAX_VALUES)
-                if values:
-                    total += values[0]
-        result[group_name] = total
+    for group_name, pattern in age_patterns:
+        m = re.search(
+            r"\d+\s*" + pattern + r"\s+([\d\s]+?)$",
+            cell_text,
+            re.MULTILINE,
+        )
+        if m:
+            nums_text = m.group(1).strip()
+            digit_groups = re.findall(r"\d+", nums_text)
+            values = parse_table_row_numbers(digit_groups, ROW_MAX_VALUES)
+            result[group_name] = values[0] if values else 0
+        else:
+            result[group_name] = 0
 
     return result
 

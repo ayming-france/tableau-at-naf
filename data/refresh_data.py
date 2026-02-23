@@ -707,7 +707,7 @@ def validate(data, label, spot_code="4711D"):
         print(f"      IF: {s['indice_frequence']} | IP: {s['nouvelles_ip']}")
 
 
-AGE_GROUPS = ["15-19", "20-29", "30-39", "40-49", "50-59", "60+"]
+AGE_GROUPS = ["<20", "20-24", "25-29", "30-34", "35-39", "40-49", "50-59", "60-64", "65+"]
 
 
 def merge_pdf_data(at_data, pdf_data):

@@ -870,7 +870,7 @@
   }
   .evo-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
   .evo-card {
@@ -1140,11 +1140,10 @@
         </div>
       </div>
       <div class="evo-section" id="at-evoSection" style="display:none">
-        <h3 class="evo-title">Evolution 2021 - 2023</h3>
+        <h3 class="evo-title">Evolution 2019 - 2023</h3>
         <div class="evo-grid">
           <div class="evo-card"><div class="evo-chart-wrap"><canvas id="at-evoEvents"></canvas></div></div>
           <div class="evo-card"><div class="evo-chart-wrap"><canvas id="at-evoIF"></canvas></div></div>
-          <div class="evo-card"><div class="evo-chart-wrap"><canvas id="at-evoTG"></canvas></div></div>
         </div>
       </div>
       <div class="demo-section" id="at-demoSection" style="display:none">
@@ -1230,11 +1229,10 @@
         </div>
       </div>
       <div class="evo-section" id="mp-evoSection" style="display:none">
-        <h3 class="evo-title">Evolution 2021 - 2023</h3>
+        <h3 class="evo-title">Evolution 2019 - 2023</h3>
         <div class="evo-grid">
           <div class="evo-card"><div class="evo-chart-wrap"><canvas id="mp-evoEvents"></canvas></div></div>
           <div class="evo-card"><div class="evo-chart-wrap"><canvas id="mp-evoIF"></canvas></div></div>
-          <div class="evo-card"><div class="evo-chart-wrap"><canvas id="mp-evoTG"></canvas></div></div>
         </div>
       </div>
     </div>
@@ -2203,35 +2201,6 @@
       }));
     }
 
-    // 3. TG chart (sector line + national dashed line) - skip for views without TG
-    var tgCanvas = viewEl(viewId, 'evoTG');
-    if (tgCanvas) {
-      vs.evoCharts.push(new Chart(tgCanvas, {
-        type: 'line',
-        data: {
-          labels: years,
-          datasets: [
-            {
-              label: 'Secteur', data: sectorTG,
-              borderColor: '#ef4444', borderWidth: 2,
-              pointRadius: 5, pointBackgroundColor: '#ef4444', pointHoverRadius: 7,
-              fill: true, backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.3,
-            },
-            {
-              label: 'National', data: natTG,
-              borderColor: '#64748b', borderWidth: 2, borderDash: [6, 3],
-              pointRadius: 4, pointBackgroundColor: '#64748b',
-              fill: false, tension: 0.3,
-            }
-          ]
-        },
-        options: Object.assign({}, baseOpts, {
-          plugins: Object.assign({}, baseOpts.plugins, {
-            title: { display: true, text: 'Taux de Gravite', font: { family: 'var(--sans)', size: 13, weight: '500' }, color: '#cbd5e1', padding: { bottom: 8 } },
-          }),
-        }),
-      }));
-    }
   }
 
   // ── Demographics charts (AT only) ──
@@ -2332,10 +2301,10 @@
     }));
 
     // 2. Age bar chart (horizontal)
-    var ageGroups = ['15-19', '20-29', '30-39', '40-49', '50-59', '60+'];
-    var ageLabels = ['< 20 ans', '20-29 ans', '30-39 ans', '40-49 ans', '50-59 ans', '60+ ans'];
+    var ageGroups = ['<20', '20-24', '25-29', '30-34', '35-39', '40-49', '50-59', '60-64', '65+'];
+    var ageLabels = ['< 20 ans', '20-24 ans', '25-29 ans', '30-34 ans', '35-39 ans', '40-49 ans', '50-59 ans', '60-64 ans', '65+ ans'];
     var ageValues = ageGroups.map(function(g) { return (demo.age && demo.age[g]) || 0; });
-    var ageColors = ['rgba(99,102,241,0.35)', 'rgba(99,102,241,0.45)', 'rgba(99,102,241,0.55)', 'rgba(99,102,241,0.65)', 'rgba(99,102,241,0.78)', 'rgba(99,102,241,0.9)'];
+    var ageColors = ['rgba(99,102,241,0.3)', 'rgba(99,102,241,0.38)', 'rgba(99,102,241,0.46)', 'rgba(99,102,241,0.54)', 'rgba(99,102,241,0.62)', 'rgba(99,102,241,0.7)', 'rgba(99,102,241,0.78)', 'rgba(99,102,241,0.86)', 'rgba(99,102,241,0.94)'];
 
     vs.demoCharts.push(new Chart(ageCanvas, {
       type: 'bar',
