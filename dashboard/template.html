@@ -1703,26 +1703,14 @@
     var total = allAtLevel.length;
     var rankBadge = '<span class="badge neutral">#' + rank + '</span>';
 
-    var kpis;
-    if (viewId === 'trajet') {
-      kpis = [
-        { label: cfg.eventLabel, value: fmt(s[eventKey]), badge: rankBadge },
-        { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
-        { label: 'Journees perdues', value: fmt(s.journees_it), badge: '' },
-        { label: 'Incapacites permanentes', value: fmt(s.nouvelles_ip), badge: '' },
-        { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
-        { label: 'Etablissements', value: fmt(s.nb_siret), badge: '' },
-      ];
-    } else {
-      kpis = [
-        { label: cfg.eventLabel, value: fmt(s[eventKey]), badge: rankBadge },
-        { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
-        { label: 'Taux de gravite', value: fmt(s.taux_gravite), badge: badgeHTML(s.taux_gravite, nat.taux_gravite) },
-        { label: 'Etablissements', value: fmt(s.nb_siret), badge: '' },
-        { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
-        { label: 'Heures travaillees', value: fmt(s.nb_heures), badge: '' },
-      ];
-    }
+    var kpis = [
+      { label: cfg.eventLabel, value: fmt(s[eventKey]), badge: rankBadge },
+      { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
+      { label: 'Deces', value: fmt(s.deces), badge: '' },
+      { label: 'Journees perdues', value: fmt(s.journees_it), badge: '' },
+      { label: 'Incapacites permanentes', value: fmt(s.nouvelles_ip), badge: '' },
+      { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
+    ];
 
     viewEl(viewId, 'kpiGrid').innerHTML = kpis.map(function(k) {
       return '<div class="kpi-card">' +
