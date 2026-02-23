@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accidents du Travail par Secteur | Ameli 2023</title>
+<title>Sinistralite par Secteur | Ameli 2023</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
   :root {
@@ -53,9 +54,100 @@
   .container {
     position: relative;
     z-index: 1;
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 48px 24px 80px;
+    padding: 48px 40px 80px 96px; /* left = 56px rail + 40px breathing room */
+  }
+
+  /* ===== NAV RAIL (GA4-style) ===== */
+  .nav-rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 56px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.2s ease;
+    overflow: hidden;
+  }
+  .nav-rail:hover { width: 220px; }
+  .nav-rail:hover .nav-label { opacity: 1; }
+  .nav-rail:hover .nav-badge { opacity: 1; }
+
+  .nav-items {
+    padding: 16px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 44px;
+    padding: 0 16px;
+    font-size: 0.84rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: var(--sans);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .nav-item.active {
+    color: var(--accent);
+  }
+  .nav-item.active .nav-icon-wrap {
+    background: var(--accent-glow);
+    border-color: rgba(212,160,67,0.3);
+  }
+  .nav-item.disabled {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+  }
+  .nav-icon-wrap {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav-icon-wrap svg { width: 15px; height: 15px; }
+  .nav-label {
+    opacity: 0;
+    transition: opacity 0.15s;
+    font-weight: 500;
+  }
+  .nav-badge {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 2px;
+    background: rgba(139,148,158,0.15);
+    color: var(--text-dim);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .nav-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 12px;
   }
 
   /* ===== HEADER ===== */
@@ -205,7 +297,7 @@
     flex-shrink: 0;
   }
 
-  /* Level tabs (embedded in search-wrapper) */
+  /* Level tabs */
   .level-tabs { display: flex; gap: 2px; padding-right: 6px; flex-shrink: 0; }
   .level-tabs button {
     padding: 8px 14px;
@@ -228,8 +320,8 @@
   }
 
   /* ===== RESULTS ===== */
-  #results { display: none; }
-  #results.visible { display: block; animation: fadeUp 0.35s ease-out; }
+  .results-section { display: none; }
+  .results-section.visible { display: block; animation: fadeUp 0.35s ease-out; }
 
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(12px); }
@@ -391,7 +483,7 @@
     50% { filter: drop-shadow(0 0 6px rgba(212,160,67,0.7)); }
   }
 
-  /* Action button tooltips (matches funnel-tooltip style) */
+  /* Action button tooltips */
   .action-btn::after {
     content: attr(data-tip);
     position: absolute;
@@ -562,7 +654,7 @@
   .share-option-label { flex: 1; text-align: left; font-size: 0.88rem; }
   .share-option-arrow { color: var(--text-dim); font-size: 1.1rem; }
 
-  /* Insight items (reused, stacked full-width) */
+  /* Insight items */
   .insight {
     display: flex;
     align-items: flex-start;
@@ -765,14 +857,65 @@
   .funnel-tooltip.visible { opacity: 1; }
   .funnel-tooltip .tt-pct { color: var(--text-secondary); margin-left: 4px; }
 
+  /* ===== EVOLUTION ===== */
+  .evo-section { margin-top: 32px; }
+  .evo-title {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+  .evo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .evo-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 12px 12px;
+  }
+  .evo-chart-wrap { height: 220px; position: relative; }
+  .evo-delta {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+  .evo-delta.up { color: #ef4444; background: rgba(239,68,68,0.1); }
+  .evo-delta.down { color: #22c55e; background: rgba(34,197,94,0.1); }
+  .evo-delta.neutral { color: var(--text-dim); background: rgba(128,128,128,0.1); }
+
+  @media (max-width: 768px) {
+    .evo-grid { grid-template-columns: 1fr; }
+    .demo-grid { grid-template-columns: 1fr !important; }
+  }
+
+  /* ===== DEMOGRAPHICS ===== */
+  .demo-section { margin-top: 32px; }
+  .demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+  }
+  .demo-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 12px 12px;
+  }
+  .demo-chart-wrap { height: 260px; position: relative; }
+
   /* ===== EMPTY STATE ===== */
-  .empty-state {
-    padding: 64px 0;
-  }
-  .empty-inner {
-    max-width: 600px;
-    margin: 0 auto;
-  }
+  .empty-state { padding: 64px 0; }
+  .empty-inner { max-width: 600px; margin: 0 auto; }
   .empty-lead {
     font-family: var(--sans);
     font-size: 0.95rem;
@@ -826,6 +969,10 @@
     white-space: nowrap;
   }
 
+  /* ===== VIEW CONTAINERS ===== */
+  .view { display: none; }
+  .view.active { display: block; }
+
   /* ===== FOOTER ===== */
   footer {
     margin-top: 48px;
@@ -878,6 +1025,8 @@
     .level-tabs button { padding: 8px 10px; font-size: 0.72rem; }
     .insights-drawer { width: 100%; }
     .share-drawer { width: 100%; }
+    .nav-rail { width: 0; border-right: none; }
+    .container { padding-left: 16px; }
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-row { grid-template-columns: 1fr; }
     .kpi-card .value { font-size: 1.5rem; }
@@ -887,89 +1036,286 @@
 </head>
 <body>
 
+<!-- Nav rail (GA4-style) -->
+<nav class="nav-rail" id="navRail">
+  <div class="nav-items">
+    <button class="nav-item active" data-view="at">
+      <span class="nav-icon-wrap"><i data-lucide="hard-hat"></i></span>
+      <span class="nav-label">Accidents du Travail</span>
+    </button>
+    <button class="nav-item" data-view="mp">
+      <span class="nav-icon-wrap"><i data-lucide="thermometer"></i></span>
+      <span class="nav-label">Maladies Pro.</span>
+    </button>
+    <button class="nav-item" data-view="trajet">
+      <span class="nav-icon-wrap"><i data-lucide="car"></i></span>
+      <span class="nav-label">Trajet</span>
+    </button>
+    <div class="nav-divider"></div>
+    <button class="nav-item disabled" data-view="overview">
+      <span class="nav-icon-wrap"><i data-lucide="layout-dashboard"></i></span>
+      <span class="nav-label">Vue d'ensemble</span>
+      <span class="nav-badge">bientot</span>
+    </button>
+  </div>
+</nav>
+
 <div class="container">
   <header>
-    <div class="header-eyebrow">Ameli Open Data 2023</div>
-    <h1>Accidents du Travail par Secteur</h1>
-    <p>Statistiques de sinistralite par code NAF. 729 secteurs, 19,3M salaries.</p>
+    <div class="header-eyebrow" id="headerEyebrow">Ameli Open Data 2023</div>
+    <h1 id="headerTitle">Accidents du Travail par Secteur</h1>
+    <p id="headerSubtitle">Statistiques de sinistralite par code NAF. 729 secteurs, 19,3M salaries.</p>
   </header>
 
-  <div class="search-section">
-    <div class="search-row">
-      <div class="search-wrapper">
-        <span class="icon">/</span>
-        <input type="text" id="searchInput" placeholder="code NAF ou activite..." autocomplete="off">
-        <div class="level-tabs" id="levelTabs">
-          <button data-level="naf2" class="active">NAF2</button>
-          <button data-level="naf5">NAF</button>
-          <button data-level="naf4">NAF4</button>
+  <!-- ═══ AT VIEW ═══ -->
+  <div class="view active" id="view-at">
+    <div class="search-section">
+      <div class="search-row">
+        <div class="search-wrapper">
+          <span class="icon">/</span>
+          <input type="text" id="at-searchInput" placeholder="code NAF ou activite..." autocomplete="off">
+          <div class="level-tabs" id="at-levelTabs">
+            <button data-level="naf2" class="active">NAF2</button>
+            <button data-level="naf5">NAF</button>
+            <button data-level="naf4">NAF4</button>
+          </div>
+          <div class="autocomplete" id="at-autocomplete"></div>
         </div>
-        <div class="autocomplete" id="autocomplete"></div>
+        <div class="action-icons">
+          <button class="action-btn" id="shareBtn" data-tip="Partager" onclick="toggleShare()"><i data-lucide="share-2"></i></button>
+          <button class="action-btn" id="insightsBtn" data-tip="Insights" onclick="toggleInsights()"><i data-lucide="sparkles"></i><span class="notif-badge" id="insightsBadge"></span></button>
+        </div>
       </div>
-      <div class="action-icons" id="actionIcons">
-        <button class="action-btn" id="shareBtn" data-tip="Partager" onclick="toggleShare()"><i data-lucide="share-2"></i></button>
-        <button class="action-btn" id="insightsBtn" data-tip="Insights" onclick="toggleInsights()"><i data-lucide="sparkles"></i><span class="notif-badge" id="insightsBadge"></span></button>
+    </div>
+
+    <div class="empty-state" id="at-emptyState">
+      <div class="empty-inner">
+        <p class="empty-lead">Tapez un code NAF ou un mot-cle pour explorer<br>la sinistralite d'un secteur d'activite.</p>
+        <div class="naf-table">
+          <div class="naf-row" data-view="at">
+            <span class="naf-badge">NAF</span>
+            <span class="naf-desc">Activite precise</span>
+            <span class="naf-example" data-code="4711D">4711D</span>
+            <span class="naf-label">Supermarches</span>
+          </div>
+          <div class="naf-row" data-view="at">
+            <span class="naf-badge">NAF4</span>
+            <span class="naf-desc">Sous-classe agregee</span>
+            <span class="naf-example" data-code="4711">4711</span>
+            <span class="naf-label">Commerce d'alimentation generale</span>
+          </div>
+          <div class="naf-row" data-view="at">
+            <span class="naf-badge">NAF2</span>
+            <span class="naf-desc">Division sectorielle</span>
+            <span class="naf-example" data-code="47">47</span>
+            <span class="naf-label">Commerce de detail</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-section" id="at-results">
+      <div class="selection-header">
+        <div class="breadcrumb" id="at-breadcrumb"></div>
+        <h2 id="at-selTitle"></h2>
+        <div class="sub" id="at-selSub"></div>
+      </div>
+      <div class="kpi-grid" id="at-kpiGrid"></div>
+      <div class="comparison-card" id="at-compCard">
+        <h3 id="at-compTitle">Comparaison</h3>
+        <div class="chart-wrap" id="at-compWrap" style="height:320px"><canvas id="at-compChart"></canvas></div>
+      </div>
+      <div class="position-card" id="at-positionCard">
+        <h3 id="at-posTitle">Positionnement IF</h3>
+        <div class="pos-strip-wrap" id="at-posStrip"></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>Causes d'accidents</h3>
+          <div class="chart-wrap" id="at-causesWrap" style="height:320px"><canvas id="at-causesChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Cascade de severite</h3>
+          <div id="at-funnelWrap"></div>
+        </div>
+      </div>
+      <div class="evo-section" id="at-evoSection" style="display:none">
+        <h3 class="evo-title">Evolution 2021 - 2023</h3>
+        <div class="evo-grid">
+          <div class="evo-card"><div class="evo-chart-wrap"><canvas id="at-evoEvents"></canvas></div></div>
+          <div class="evo-card"><div class="evo-chart-wrap"><canvas id="at-evoIF"></canvas></div></div>
+          <div class="evo-card"><div class="evo-chart-wrap"><canvas id="at-evoTG"></canvas></div></div>
+        </div>
+      </div>
+      <div class="demo-section" id="at-demoSection" style="display:none">
+        <h3 class="evo-title">Demographie des AT</h3>
+        <div class="demo-grid">
+          <div class="demo-card"><div class="demo-chart-wrap"><canvas id="at-demoSex"></canvas></div></div>
+          <div class="demo-card"><div class="demo-chart-wrap"><canvas id="at-demoAge"></canvas></div></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="empty-state" id="emptyState">
-    <div class="empty-inner">
-      <p class="empty-lead">Tapez un code NAF ou un mot-cle pour explorer<br>la sinistralite d'un secteur d'activite.</p>
-      <div class="naf-table">
-        <div class="naf-row">
-          <span class="naf-badge">NAF</span>
-          <span class="naf-desc">Activite precise</span>
-          <span class="naf-example" data-code="4711D">4711D</span>
-          <span class="naf-label">Supermarches</span>
+  <!-- ═══ MP VIEW ═══ -->
+  <div class="view" id="view-mp">
+    <div class="search-section">
+      <div class="search-row">
+        <div class="search-wrapper">
+          <span class="icon">/</span>
+          <input type="text" id="mp-searchInput" placeholder="code NAF ou activite..." autocomplete="off">
+          <div class="level-tabs" id="mp-levelTabs">
+            <button data-level="naf2" class="active">NAF2</button>
+            <button data-level="naf5">NAF</button>
+            <button data-level="naf4">NAF4</button>
+          </div>
+          <div class="autocomplete" id="mp-autocomplete"></div>
         </div>
-        <div class="naf-row">
-          <span class="naf-badge">NAF4</span>
-          <span class="naf-desc">Sous-classe agregee</span>
-          <span class="naf-example" data-code="4711">4711</span>
-          <span class="naf-label">Commerce d'alimentation generale</span>
+        <div class="action-icons">
+          <button class="action-btn" id="mp-shareBtn" data-tip="Partager" onclick="toggleShare()"><i data-lucide="share-2"></i></button>
+          <button class="action-btn" id="mp-insightsBtn" data-tip="Insights" onclick="toggleInsights()"><i data-lucide="sparkles"></i><span class="notif-badge" id="mp-insightsBadge"></span></button>
         </div>
-        <div class="naf-row">
-          <span class="naf-badge">NAF2</span>
-          <span class="naf-desc">Division sectorielle</span>
-          <span class="naf-example" data-code="47">47</span>
-          <span class="naf-label">Commerce de detail</span>
+      </div>
+    </div>
+
+    <div class="empty-state" id="mp-emptyState">
+      <div class="empty-inner">
+        <p class="empty-lead">Tapez un code NAF ou un mot-cle pour explorer<br>les maladies professionnelles d'un secteur d'activite.</p>
+        <div class="naf-table">
+          <div class="naf-row" data-view="mp">
+            <span class="naf-badge">NAF</span>
+            <span class="naf-desc">Activite precise</span>
+            <span class="naf-example" data-code="4711D">4711D</span>
+            <span class="naf-label">Supermarches</span>
+          </div>
+          <div class="naf-row" data-view="mp">
+            <span class="naf-badge">NAF4</span>
+            <span class="naf-desc">Sous-classe agregee</span>
+            <span class="naf-example" data-code="4711">4711</span>
+            <span class="naf-label">Commerce d'alimentation generale</span>
+          </div>
+          <div class="naf-row" data-view="mp">
+            <span class="naf-badge">NAF2</span>
+            <span class="naf-desc">Division sectorielle</span>
+            <span class="naf-example" data-code="47">47</span>
+            <span class="naf-label">Commerce de detail</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-section" id="mp-results">
+      <div class="selection-header">
+        <div class="breadcrumb" id="mp-breadcrumb"></div>
+        <h2 id="mp-selTitle"></h2>
+        <div class="sub" id="mp-selSub"></div>
+      </div>
+      <div class="kpi-grid" id="mp-kpiGrid"></div>
+      <div class="comparison-card" id="mp-compCard">
+        <h3 id="mp-compTitle">Comparaison</h3>
+        <div class="chart-wrap" id="mp-compWrap" style="height:320px"><canvas id="mp-compChart"></canvas></div>
+      </div>
+      <div class="position-card" id="mp-positionCard">
+        <h3 id="mp-posTitle">Positionnement IF</h3>
+        <div class="pos-strip-wrap" id="mp-posStrip"></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>Types de maladies</h3>
+          <div class="chart-wrap" id="mp-causesWrap" style="height:320px"><canvas id="mp-causesChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Cascade de severite</h3>
+          <div id="mp-funnelWrap"></div>
+        </div>
+      </div>
+      <div class="evo-section" id="mp-evoSection" style="display:none">
+        <h3 class="evo-title">Evolution 2021 - 2023</h3>
+        <div class="evo-grid">
+          <div class="evo-card"><div class="evo-chart-wrap"><canvas id="mp-evoEvents"></canvas></div></div>
+          <div class="evo-card"><div class="evo-chart-wrap"><canvas id="mp-evoIF"></canvas></div></div>
+          <div class="evo-card"><div class="evo-chart-wrap"><canvas id="mp-evoTG"></canvas></div></div>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="results">
-    <div class="selection-header">
-      <div class="breadcrumb" id="breadcrumb"></div>
-      <h2 id="selTitle"></h2>
-      <div class="sub" id="selSub"></div>
-    </div>
-
-    <div class="kpi-grid" id="kpiGrid"></div>
-
-    <div class="comparison-card" id="compCard">
-      <h3 id="compTitle">Comparaison</h3>
-      <div class="chart-wrap" id="compWrap" style="height:320px"><canvas id="compChart"></canvas></div>
-    </div>
-
-    <div class="position-card" id="positionCard">
-      <h3 id="posTitle">Positionnement IF</h3>
-      <div class="pos-strip-wrap" id="posStrip"></div>
-    </div>
-
-    <div class="charts-row">
-      <div class="chart-card">
-        <h3>Causes d'accidents</h3>
-        <div class="chart-wrap" id="causesWrap" style="height:320px"><canvas id="causesChart"></canvas></div>
+  <!-- ═══ TRAJET VIEW ═══ -->
+  <div class="view" id="view-trajet">
+    <div class="search-section">
+      <div class="search-row">
+        <div class="search-wrapper">
+          <span class="icon">/</span>
+          <input type="text" id="trajet-searchInput" placeholder="code NAF ou activite..." autocomplete="off">
+          <div class="level-tabs" id="trajet-levelTabs">
+            <button data-level="naf2" class="active">NAF2</button>
+            <button data-level="naf5">NAF</button>
+            <button data-level="naf4">NAF4</button>
+          </div>
+          <div class="autocomplete" id="trajet-autocomplete"></div>
+        </div>
+        <div class="action-icons">
+          <button class="action-btn" id="trajet-shareBtn" data-tip="Partager" onclick="toggleShare()"><i data-lucide="share-2"></i></button>
+          <button class="action-btn" id="trajet-insightsBtn" data-tip="Insights" onclick="toggleInsights()"><i data-lucide="sparkles"></i><span class="notif-badge" id="trajet-insightsBadge"></span></button>
+        </div>
       </div>
-      <div class="chart-card">
-        <h3>Cascade de severite</h3>
-        <div id="funnelWrap"></div>
+    </div>
+
+    <div class="empty-state" id="trajet-emptyState">
+      <div class="empty-inner">
+        <p class="empty-lead">Tapez un code NAF ou un mot-cle pour explorer<br>les accidents de trajet d'un secteur d'activite.</p>
+        <div class="naf-table">
+          <div class="naf-row" data-view="trajet">
+            <span class="naf-badge">NAF</span>
+            <span class="naf-desc">Activite precise</span>
+            <span class="naf-example" data-code="4711D">4711D</span>
+            <span class="naf-label">Supermarches</span>
+          </div>
+          <div class="naf-row" data-view="trajet">
+            <span class="naf-badge">NAF4</span>
+            <span class="naf-desc">Sous-classe agregee</span>
+            <span class="naf-example" data-code="4711">4711</span>
+            <span class="naf-label">Commerce d'alimentation generale</span>
+          </div>
+          <div class="naf-row" data-view="trajet">
+            <span class="naf-badge">NAF2</span>
+            <span class="naf-desc">Division sectorielle</span>
+            <span class="naf-example" data-code="47">47</span>
+            <span class="naf-label">Commerce de detail</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-section" id="trajet-results">
+      <div class="selection-header">
+        <div class="breadcrumb" id="trajet-breadcrumb"></div>
+        <h2 id="trajet-selTitle"></h2>
+        <div class="sub" id="trajet-selSub"></div>
+      </div>
+      <div class="kpi-grid" id="trajet-kpiGrid"></div>
+      <div class="comparison-card" id="trajet-compCard">
+        <h3 id="trajet-compTitle">Comparaison</h3>
+        <div class="chart-wrap" id="trajet-compWrap" style="height:320px"><canvas id="trajet-compChart"></canvas></div>
+      </div>
+      <div class="position-card" id="trajet-positionCard">
+        <h3 id="trajet-posTitle">Positionnement IF</h3>
+        <div class="pos-strip-wrap" id="trajet-posStrip"></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card" id="trajet-evoSection" style="display:none">
+          <h3>Evolution 2019 - 2023</h3>
+          <div class="evo-chart-wrap"><canvas id="trajet-evoEvents"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Cascade de severite</h3>
+          <div id="trajet-funnelWrap"></div>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Shared drawers -->
   <div class="insights-drawer" id="insightsDrawer">
     <div class="insights-drawer-header">
       <span class="drawer-icon"><i data-lucide="sparkles"></i></span>
@@ -1003,42 +1349,95 @@
   </div>
 
   <footer>
-    <span>Source : <a href="https://assurance-maladie.ameli.fr/etudes-et-donnees/risque-at-ctn-x-naf-serie-annuelle" target="_blank">Ameli, Risque AT par CTN x NAF 2023</a></span>
-    <span>729 codes NAF &middot; 89 divisions</span>
+    <span id="footerSource">Source : <a href="https://assurance-maladie.ameli.fr/etudes-et-donnees/risque-at-ctn-x-naf-serie-annuelle" target="_blank">Ameli, Risque AT par CTN x NAF 2023</a></span>
+    <span id="footerStats">729 codes NAF &middot; 89 divisions</span>
   </footer>
 </div>
 
 <script>
-/* __AT_DATA_INJECTION__ */
+/* __DATA_INJECTION__ */
 
 (function() {
   'use strict';
 
-  // --- State ---
-  let currentCode = null;
-  let currentLevel = 'naf2';
-  let causesChart = null;
-  let compChart = null;
-  let acIndex = -1;
+  // ── View config ──
+  const VIEW_CONFIG = {
+    at: {
+      title: 'Accidents du Travail par Secteur',
+      subtitle: 'Statistiques de sinistralite par code NAF. 729 secteurs, 19,3M salaries.',
+      eventKey: 'at_1er_reglement',
+      eventLabel: 'Accidents du travail',
+      secondaryKey: 'at_4j_arret',
+      ifDenominator: 'at_4j_arret',
+      sourceLabel: 'Ameli, Risque AT par CTN x NAF 2023',
+      sourceUrl: 'https://assurance-maladie.ameli.fr/etudes-et-donnees/risque-at-ctn-x-naf-serie-annuelle',
+      causesTitle: 'Causes d\'accidents',
+      funnelItems: function(s) {
+        return [
+          { label: 'Deces',                    value: s.deces || 0,             color: '#c74a43' },
+          { label: 'Incapacites permanentes', value: s.nouvelles_ip || 0,      color: '#d4a043' },
+          { label: 'AT avec arret 4j+',       value: s.at_4j_arret || 0,      color: '#4e8ac5' },
+          { label: 'AT en 1er reglement',     value: s.at_1er_reglement || 0,  color: '#6a5ec8' },
+        ];
+      },
+    },
+    mp: {
+      title: 'Maladies Professionnelles par Secteur',
+      subtitle: 'Statistiques de maladies professionnelles par code NAF. 729 secteurs.',
+      eventKey: 'mp_1er_reglement',
+      eventLabel: 'Maladies professionnelles',
+      secondaryKey: 'mp_1er_reglement',
+      ifDenominator: 'mp_1er_reglement',
+      sourceLabel: 'Ameli, Risque MP par CTN x NAF 2023',
+      sourceUrl: 'https://assurance-maladie.ameli.fr/etudes-et-donnees/risque-mp-ctn-x-naf-serie-annuelle',
+      causesTitle: 'Types de maladies',
+      funnelItems: function(s) {
+        return [
+          { label: 'Deces',                    value: s.deces || 0,             color: '#c74a43' },
+          { label: 'Incapacites permanentes', value: s.nouvelles_ip || 0,      color: '#d4a043' },
+          { label: 'MP en 1er reglement',     value: s.mp_1er_reglement || 0,  color: '#6a5ec8' },
+        ];
+      },
+    },
+    trajet: {
+      title: 'Accidents de Trajet par Secteur',
+      subtitle: 'Statistiques d\'accidents de trajet par code NAF. 629 secteurs.',
+      eventKey: 'trajet_count',
+      eventLabel: 'Accidents de trajet',
+      secondaryKey: 'trajet_count',
+      ifDenominator: 'trajet_count',
+      sourceLabel: 'Ameli, Fiches NAF 2023 (PDF)',
+      sourceUrl: 'https://assurance-maladie.ameli.fr/etudes-et-donnees/sinistralite-at-mp-par-code-naf',
+      causesTitle: null,
+      funnelItems: function(s) {
+        return [
+          { label: 'Deces',                    value: s.deces || 0,             color: '#e5534b' },
+          { label: 'Incapacites permanentes', value: s.nouvelles_ip || 0,      color: '#d4a043' },
+          { label: 'Acc. trajet en 1er reglement', value: s.trajet_count || 0, color: '#7c6ef0' },
+        ];
+      },
+    },
+  };
 
-  // --- Elements ---
-  const searchInput = document.getElementById('searchInput');
-  const acBox = document.getElementById('autocomplete');
-  const resultsDiv = document.getElementById('results');
-  const emptyState = document.getElementById('emptyState');
-  const levelTabs = document.getElementById('levelTabs');
+  // ── State ──
+  let activeView = 'at';
+  const viewState = {
+    at: { code: null, level: 'naf2', causesChart: null, compChart: null, evoCharts: [], demoCharts: [], acIndex: -1 },
+    mp: { code: null, level: 'naf2', causesChart: null, compChart: null, evoCharts: [], acIndex: -1 },
+    trajet: { code: null, level: 'naf2', causesChart: null, compChart: null, evoCharts: [], acIndex: -1 },
+  };
 
-  // --- Chart defaults for dark theme ---
+  // ── Chart defaults ──
   Chart.defaults.color = '#8b949e';
+  // Force all Chart.js legend text to be readable on dark backgrounds
+  Chart.defaults.plugins.legend.labels.color = '#c9d1d9';
   Chart.defaults.borderColor = '#2d333b';
   Chart.defaults.font.family = "'DM Sans', sans-serif";
 
-  // --- Helpers ---
+  // ── Helpers ──
   function fmt(n) {
     if (n === undefined || n === null) return '-';
-    const str = n.toLocaleString('fr-FR');
-    // Replace narrow/non-breaking spaces with regular spaces (invisible in some fonts)
-    return str.replace(/[\u202F\u00A0]/g, ' ');
+    return n.toLocaleString('fr-FR').replace(/[\u202F\u00A0]/g, ' ');
   }
 
   function badgeHTML(secteur, national, invert) {
@@ -1050,293 +1449,380 @@
     return `<span class="badge ${cls}">${sign}${pct.toFixed(0)}% vs national</span>`;
   }
 
-  function getStore(level) {
-    return DATA['by_' + level];
+  function getStore(viewId, level) {
+    return DATASETS[viewId]['by_' + level];
+  }
+
+  function getData(viewId) {
+    return DATASETS[viewId];
   }
 
   function normalize(str) {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 
-  // --- Search & Autocomplete ---
-  let debounceTimer;
-  searchInput.addEventListener('input', function() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => showAutocomplete(this.value), 120);
-  });
-
-  searchInput.addEventListener('focus', function() {
-    showAutocomplete(this.value);
-  });
-
-  searchInput.addEventListener('keydown', function(e) {
-    const items = acBox.querySelectorAll('.ac-item');
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      acIndex = Math.min(acIndex + 1, items.length - 1);
-      updateAcActive(items);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      acIndex = Math.max(acIndex - 1, 0);
-      updateAcActive(items);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (acIndex >= 0 && items[acIndex]) {
-        items[acIndex].click();
-      }
-    } else if (e.key === 'Escape') {
-      closeAc();
-    }
-  });
-
-  function updateAcActive(items) {
-    items.forEach((el, i) => el.classList.toggle('active', i === acIndex));
-    if (items[acIndex]) items[acIndex].scrollIntoView({ block: 'nearest' });
-  }
-
-  // All NAF2 divisions sorted by code for the default browse list
-  const defaultEntries = (function() {
-    return Object.entries(DATA.by_naf2)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([code, v]) => ({ code, libelle: v.libelle, level: 'naf2' }));
-  })();
-
-  function showAutocomplete(query) {
-    let matches;
-    if (!query || query.length < 1) {
-      matches = defaultEntries;
-    } else {
-      const q = normalize(query);
-      const qUp = query.trim().toUpperCase();
-      const isCodeSearch = /^[0-9]/.test(query.trim());
-      matches = DATA.naf_index
-        .filter(e => {
-          if (isCodeSearch) return e.code.toUpperCase().startsWith(qUp);
-          return normalize(e.code).includes(q) || normalize(e.libelle).includes(q);
-        })
-        .sort((a, b) => {
-          // 1. Exact match first
-          const aExact = a.code.toUpperCase() === qUp ? 0 : 1;
-          const bExact = b.code.toUpperCase() === qUp ? 0 : 1;
-          if (aExact !== bExact) return aExact - bExact;
-          // 2. Active level first
-          const aLevel = a.level === currentLevel ? 0 : 1;
-          const bLevel = b.level === currentLevel ? 0 : 1;
-          if (aLevel !== bLevel) return aLevel - bLevel;
-          // 3. Code starts with query first
-          const aStarts = a.code.toUpperCase().startsWith(qUp) ? 0 : 1;
-          const bStarts = b.code.toUpperCase().startsWith(qUp) ? 0 : 1;
-          if (aStarts !== bStarts) return aStarts - bStarts;
-          // 4. Sort by code
-          return a.code.localeCompare(b.code);
-        })
-        .slice(0, 20);
-    }
-
-    if (matches.length === 0) { closeAc(); return; }
-
-    acBox.innerHTML = matches.map(m =>
-      `<div class="ac-item" data-code="${m.code}" data-level="${m.level}">
-        <span class="code">${m.code}</span>
-        <span class="libelle">${m.libelle}</span>
-        <span class="level-tag">${m.level.toUpperCase()}</span>
-      </div>`
-    ).join('');
-
-    acBox.querySelectorAll('.ac-item').forEach(el => {
-      el.addEventListener('click', function() {
-        const code = this.dataset.code;
-        const level = this.dataset.level;
-        setLevel(level);
-        selectCode(code, level);
-        closeAc();
-      });
-    });
-
-    acIndex = -1;
-    acBox.classList.add('open');
-  }
-
-  function closeAc() {
-    acBox.classList.remove('open');
-    acIndex = -1;
-  }
-
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest('.search-wrapper')) closeAc();
-  });
-
-  // --- Level tabs ---
-  levelTabs.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', function() {
-      setLevel(this.dataset.level);
-      if (currentCode) {
-        const newCode = adaptCode(currentCode, currentLevel);
-        if (newCode) selectCode(newCode, currentLevel);
-      }
-    });
-  });
-
-  function setLevel(level) {
-    currentLevel = level;
-    levelTabs.querySelectorAll('button').forEach(b =>
-      b.classList.toggle('active', b.dataset.level === level)
-    );
-  }
-
-  function adaptCode(code, targetLevel) {
-    const store = getStore(targetLevel);
-    // Direct match
-    if (store[code]) return code;
-    // Going up: truncate
-    if (targetLevel === 'naf4' && code.length >= 4) return store[code.substring(0, 4)] ? code.substring(0, 4) : null;
-    if (targetLevel === 'naf2') return store[code.substring(0, 2)] ? code.substring(0, 2) : null;
-    // Going down: find first code starting with current prefix
-    const match = Object.keys(store).find(k => k.startsWith(code));
-    return match || null;
-  }
-
-  // --- Select & Render ---
-  function selectCode(code, level) {
-    currentCode = code;
-    currentLevel = level;
-    searchInput.value = code;
-    window.location.hash = code;
-    render(code, level);
-  }
-
-  function render(code, level) {
-    const store = getStore(level);
-    const entry = store[code];
-    if (!entry) return;
-
-    emptyState.style.display = 'none';
-    resultsDiv.classList.add('visible');
-
-    const s = entry.stats;
-    const nat = DATA.meta.national;
-
-    document.getElementById('selTitle').textContent = `${code} \u2014 ${entry.libelle}`;
-    const levelLabel = level === 'naf5' ? 'Code NAF' : level === 'naf4' ? 'Sous-classe NAF' : 'Division NAF';
-    let subText = levelLabel;
-    if (entry.codes_naf5) subText += ` // ${entry.codes_naf5.length} codes NAF agreg\u00E9s`;
-    document.getElementById('selSub').textContent = subText;
-
-    // Breadcrumb: NAF2 > NAF4 > NAF5
-    const bc = document.getElementById('breadcrumb');
-    const crumbs = [];
-    const naf2code = code.substring(0, 2);
-    const naf4code = code.substring(0, 4);
-    const naf2entry = DATA.by_naf2[naf2code];
-    const naf4entry = DATA.by_naf4[naf4code];
-    if (level === 'naf5') {
-      if (naf2entry) crumbs.push({ code: naf2code, label: `${naf2code} ${naf2entry.libelle}`, level: 'naf2' });
-      if (naf4entry) crumbs.push({ code: naf4code, label: `${naf4code} ${naf4entry.libelle}`, level: 'naf4' });
-      crumbs.push({ label: `${code}`, current: true });
-    } else if (level === 'naf4') {
-      if (naf2entry) crumbs.push({ code: naf2code, label: `${naf2code} ${naf2entry.libelle}`, level: 'naf2' });
-      crumbs.push({ label: `${code}`, current: true });
-    } else {
-      crumbs.push({ label: `${code}`, current: true });
-    }
-    bc.innerHTML = crumbs.map((c, i) => {
-      const sep = i < crumbs.length - 1 ? '<span class="sep">&rsaquo;</span>' : '';
-      if (c.current) return `<span class="current">${c.label}</span>`;
-      return `<a data-code="${c.code}" data-level="${c.level}">${c.label}</a>${sep}`;
-    }).join('');
-    bc.querySelectorAll('a[data-code]').forEach(a => {
-      a.addEventListener('click', function() {
-        setLevel(this.dataset.level);
-        selectCode(this.dataset.code, this.dataset.level);
-      });
-    });
-
-    // Compute AT ranking at current level
-    const allAtLevel = Object.entries(getStore(level))
-      .map(([k, v]) => ({ code: k, at: v.stats.at_1er_reglement }))
-      .sort((a, b) => b.at - a.at);
-    const rank = allAtLevel.findIndex(e => e.code === code) + 1;
-    const total = allAtLevel.length;
-    const pctile = Math.round(rank / total * 100);
-    const rankBadge = `<span class="badge neutral">#${rank}</span>`;
-
-    const kpis = [
-      { label: 'Accidents du travail', value: fmt(s.at_1er_reglement), badge: rankBadge },
-      { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
-      { label: 'Taux de gravite', value: fmt(s.taux_gravite), badge: badgeHTML(s.taux_gravite, nat.taux_gravite) },
-    ];
-
-    document.getElementById('kpiGrid').innerHTML = kpis.map(k =>
-      `<div class="kpi-card">
-        <div class="label">${k.label}</div>
-        <div class="value">${k.value}</div>
-        ${k.badge}
-      </div>`
-    ).join('');
-
-    renderInsights(s, nat, entry.risk_causes);
-    renderPositionStrip(code, level, s.indice_frequence);
-    renderCausesChart(entry.risk_causes);
-    renderFunnelChart(s);
-    renderComparisonChart(code, level);
-  }
-
-  // --- Charts ---
   const CAUSE_COLORS = [
     '#7c6ef0','#4e9af5','#3fb950','#e8bc6a',
     '#e5534b','#d94fa0','#5bc0be','#f0883e'
   ];
 
-  function renderInsights(s, nat, causes) {
-    const insights = [];
+  // ── DOM helpers ──
+  function el(id) { return document.getElementById(id); }
+  function viewEl(viewId, suffix) { return el(viewId + '-' + suffix); }
 
-    // IF vs national
-    const ifRatio = s.indice_frequence / nat.indice_frequence;
+  // ── Nav ──
+  function switchView(viewId) {
+    if (viewId === activeView) return;
+    activeView = viewId;
+
+    // Update nav
+    document.querySelectorAll('.nav-item[data-view]').forEach(function(item) {
+      item.classList.toggle('active', item.dataset.view === viewId);
+    });
+
+    // Update view containers
+    document.querySelectorAll('.view').forEach(function(v) {
+      v.classList.toggle('active', v.id === 'view-' + viewId);
+    });
+
+    // Update header
+    var cfg = VIEW_CONFIG[viewId];
+    el('headerTitle').textContent = cfg.title;
+    el('headerSubtitle').textContent = cfg.subtitle;
+
+    // Update footer
+    el('footerSource').innerHTML = 'Source : <a href="' + cfg.sourceUrl + '" target="_blank">' + cfg.sourceLabel + '</a>';
+
+    // Update hash
+    var vs = viewState[viewId];
+    if (vs.code) {
+      window.location.hash = viewId + '/' + vs.code;
+    } else {
+      window.location.hash = viewId;
+    }
+  }
+
+  document.querySelectorAll('.nav-item[data-view]').forEach(function(item) {
+    if (!item.classList.contains('disabled')) {
+      item.addEventListener('click', function() {
+        switchView(this.dataset.view);
+      });
+    }
+  });
+
+  // ── Search & Autocomplete (per-view) ──
+  function setupSearch(viewId) {
+    var searchInput = viewEl(viewId, 'searchInput');
+    var acBox = viewEl(viewId, 'autocomplete');
+    var levelTabs = viewEl(viewId, 'levelTabs');
+    var vs = viewState[viewId];
+    var data = getData(viewId);
+
+    var defaultEntries = Object.entries(data.by_naf2)
+      .sort(function(a, b) { return a[0].localeCompare(b[0]); })
+      .map(function(pair) { return { code: pair[0], libelle: pair[1].libelle, level: 'naf2' }; });
+
+    var debounceTimer;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function() { showAutocomplete(searchInput.value); }, 120);
+    });
+    searchInput.addEventListener('focus', function() { showAutocomplete(this.value); });
+    searchInput.addEventListener('keydown', function(e) {
+      var items = acBox.querySelectorAll('.ac-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        vs.acIndex = Math.min(vs.acIndex + 1, items.length - 1);
+        updateAcActive(items);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        vs.acIndex = Math.max(vs.acIndex - 1, 0);
+        updateAcActive(items);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (vs.acIndex >= 0 && items[vs.acIndex]) items[vs.acIndex].click();
+      } else if (e.key === 'Escape') {
+        closeAc();
+      }
+    });
+
+    function updateAcActive(items) {
+      items.forEach(function(el, i) { el.classList.toggle('active', i === vs.acIndex); });
+      if (items[vs.acIndex]) items[vs.acIndex].scrollIntoView({ block: 'nearest' });
+    }
+
+    function showAutocomplete(query) {
+      var matches;
+      if (!query || query.length < 1) {
+        matches = defaultEntries;
+      } else {
+        var q = normalize(query);
+        var qUp = query.trim().toUpperCase();
+        var isCodeSearch = /^[0-9]/.test(query.trim());
+        matches = data.naf_index
+          .filter(function(e) {
+            if (isCodeSearch) return e.code.toUpperCase().startsWith(qUp);
+            return normalize(e.code).includes(q) || normalize(e.libelle).includes(q);
+          })
+          .sort(function(a, b) {
+            var aExact = a.code.toUpperCase() === qUp ? 0 : 1;
+            var bExact = b.code.toUpperCase() === qUp ? 0 : 1;
+            if (aExact !== bExact) return aExact - bExact;
+            var aLevel = a.level === vs.level ? 0 : 1;
+            var bLevel = b.level === vs.level ? 0 : 1;
+            if (aLevel !== bLevel) return aLevel - bLevel;
+            var aStarts = a.code.toUpperCase().startsWith(qUp) ? 0 : 1;
+            var bStarts = b.code.toUpperCase().startsWith(qUp) ? 0 : 1;
+            if (aStarts !== bStarts) return aStarts - bStarts;
+            return a.code.localeCompare(b.code);
+          })
+          .slice(0, 20);
+      }
+
+      if (matches.length === 0) { closeAc(); return; }
+
+      acBox.innerHTML = matches.map(function(m) {
+        return '<div class="ac-item" data-code="' + m.code + '" data-level="' + m.level + '">' +
+          '<span class="code">' + m.code + '</span>' +
+          '<span class="libelle">' + m.libelle + '</span>' +
+          '<span class="level-tag">' + m.level.toUpperCase() + '</span>' +
+          '</div>';
+      }).join('');
+
+      acBox.querySelectorAll('.ac-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          setLevel(viewId, this.dataset.level);
+          selectCode(viewId, this.dataset.code, this.dataset.level);
+          closeAc();
+        });
+      });
+
+      vs.acIndex = -1;
+      acBox.classList.add('open');
+    }
+
+    function closeAc() {
+      acBox.classList.remove('open');
+      vs.acIndex = -1;
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#view-' + viewId + ' .search-wrapper')) closeAc();
+    });
+
+    // Level tabs
+    levelTabs.querySelectorAll('button').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        setLevel(viewId, this.dataset.level);
+        if (vs.code) {
+          var newCode = adaptCode(viewId, vs.code, vs.level);
+          if (newCode) selectCode(viewId, newCode, vs.level);
+        }
+      });
+    });
+  }
+
+  function setLevel(viewId, level) {
+    viewState[viewId].level = level;
+    viewEl(viewId, 'levelTabs').querySelectorAll('button').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.level === level);
+    });
+  }
+
+  function adaptCode(viewId, code, targetLevel) {
+    var store = getStore(viewId, targetLevel);
+    if (store[code]) return code;
+    if (targetLevel === 'naf4' && code.length >= 4) return store[code.substring(0, 4)] ? code.substring(0, 4) : null;
+    if (targetLevel === 'naf2') return store[code.substring(0, 2)] ? code.substring(0, 2) : null;
+    var match = Object.keys(store).find(function(k) { return k.startsWith(code); });
+    return match || null;
+  }
+
+  // ── Select & Render ──
+  function selectCode(viewId, code, level) {
+    var vs = viewState[viewId];
+    vs.code = code;
+    vs.level = level;
+    viewEl(viewId, 'searchInput').value = code;
+    window.location.hash = viewId + '/' + code;
+    render(viewId, code, level);
+  }
+
+  function render(viewId, code, level) {
+    var data = getData(viewId);
+    var cfg = VIEW_CONFIG[viewId];
+    var store = getStore(viewId, level);
+    var entry = store[code];
+    if (!entry) return;
+
+    viewEl(viewId, 'emptyState').style.display = 'none';
+    viewEl(viewId, 'results').classList.add('visible');
+
+    var s = entry.stats;
+    var nat = data.meta.national;
+
+    viewEl(viewId, 'selTitle').textContent = code + ' \u2014 ' + entry.libelle;
+    var levelLabel = level === 'naf5' ? 'Code NAF' : level === 'naf4' ? 'Sous-classe NAF' : 'Division NAF';
+    var subText = levelLabel;
+    if (entry.codes_naf5) subText += ' // ' + entry.codes_naf5.length + ' codes NAF agreg\u00E9s';
+    viewEl(viewId, 'selSub').textContent = subText;
+
+    // Breadcrumb
+    var bc = viewEl(viewId, 'breadcrumb');
+    var crumbs = [];
+    var naf2code = code.substring(0, 2);
+    var naf4code = code.substring(0, 4);
+    var naf2entry = data.by_naf2[naf2code];
+    var naf4entry = data.by_naf4[naf4code];
+    if (level === 'naf5') {
+      if (naf2entry) crumbs.push({ code: naf2code, label: naf2code + ' ' + naf2entry.libelle, level: 'naf2' });
+      if (naf4entry) crumbs.push({ code: naf4code, label: naf4code + ' ' + naf4entry.libelle, level: 'naf4' });
+      crumbs.push({ label: code, current: true });
+    } else if (level === 'naf4') {
+      if (naf2entry) crumbs.push({ code: naf2code, label: naf2code + ' ' + naf2entry.libelle, level: 'naf2' });
+      crumbs.push({ label: code, current: true });
+    } else {
+      crumbs.push({ label: code, current: true });
+    }
+    bc.innerHTML = crumbs.map(function(c, i) {
+      var sep = i < crumbs.length - 1 ? '<span class="sep">&rsaquo;</span>' : '';
+      if (c.current) return '<span class="current">' + c.label + '</span>';
+      return '<a data-code="' + c.code + '" data-level="' + c.level + '">' + c.label + '</a>' + sep;
+    }).join('');
+    bc.querySelectorAll('a[data-code]').forEach(function(a) {
+      a.addEventListener('click', function() {
+        setLevel(viewId, this.dataset.level);
+        selectCode(viewId, this.dataset.code, this.dataset.level);
+      });
+    });
+
+    // Ranking by event count
+    var eventKey = cfg.eventKey;
+    var allAtLevel = Object.entries(getStore(viewId, level))
+      .map(function(pair) { return { code: pair[0], count: pair[1].stats[eventKey] }; })
+      .sort(function(a, b) { return b.count - a.count; });
+    var rank = allAtLevel.findIndex(function(e) { return e.code === code; }) + 1;
+    var total = allAtLevel.length;
+    var rankBadge = '<span class="badge neutral">#' + rank + '</span>';
+
+    var kpis;
+    if (viewId === 'trajet') {
+      kpis = [
+        { label: cfg.eventLabel, value: fmt(s[eventKey]), badge: rankBadge },
+        { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
+        { label: 'Journees perdues', value: fmt(s.journees_it), badge: '' },
+        { label: 'Incapacites permanentes', value: fmt(s.nouvelles_ip), badge: '' },
+        { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
+        { label: 'Etablissements', value: fmt(s.nb_siret), badge: '' },
+      ];
+    } else {
+      kpis = [
+        { label: cfg.eventLabel, value: fmt(s[eventKey]), badge: rankBadge },
+        { label: 'Indice de frequence', value: fmt(s.indice_frequence), badge: badgeHTML(s.indice_frequence, nat.indice_frequence) },
+        { label: 'Taux de gravite', value: fmt(s.taux_gravite), badge: badgeHTML(s.taux_gravite, nat.taux_gravite) },
+        { label: 'Etablissements', value: fmt(s.nb_siret), badge: '' },
+        { label: 'Salaries', value: fmt(s.nb_salaries), badge: '' },
+        { label: 'Heures travaillees', value: fmt(s.nb_heures), badge: '' },
+      ];
+    }
+
+    viewEl(viewId, 'kpiGrid').innerHTML = kpis.map(function(k) {
+      return '<div class="kpi-card">' +
+        '<div class="label">' + k.label + '</div>' +
+        '<div class="value">' + k.value + '</div>' +
+        (k.badge || '') +
+        '</div>';
+    }).join('');
+
+    renderInsights(viewId, s, nat, entry.risk_causes || {}, cfg, entry.yearly);
+    renderPositionStrip(viewId, code, level, s.indice_frequence);
+    if (cfg.causesTitle) {
+      renderCausesChart(viewId, entry.risk_causes);
+    }
+    renderFunnelChart(viewId, s, cfg);
+    renderComparisonChart(viewId, code, level);
+    renderEvolutionCharts(viewId, entry, level);
+    if (viewId === 'at') renderDemographics(viewId, entry);
+  }
+
+  // ── Insights ──
+  function renderInsights(viewId, s, nat, causes, cfg, yearly) {
+    var insights = [];
+
+    var ifRatio = nat.indice_frequence > 0 ? s.indice_frequence / nat.indice_frequence : 0;
     if (ifRatio >= 3) {
-      insights.push({ level: 'danger', text: `Indice de frequence ${ifRatio.toFixed(1)}x la moyenne nationale` });
+      insights.push({ level: 'danger', text: 'Indice de frequence ' + ifRatio.toFixed(1) + 'x la moyenne nationale' });
     } else if (ifRatio >= 2) {
-      insights.push({ level: 'danger', text: `IF ${ifRatio.toFixed(1)}x au-dessus de la moyenne nationale` });
+      insights.push({ level: 'danger', text: 'IF ' + ifRatio.toFixed(1) + 'x au-dessus de la moyenne nationale' });
     } else if (ifRatio >= 1.3) {
-      insights.push({ level: 'warn', text: `IF ${Math.round((ifRatio - 1) * 100)}% au-dessus de la moyenne nationale` });
-    } else if (ifRatio <= 0.5) {
-      insights.push({ level: 'info', text: `IF 2x en dessous de la moyenne nationale` });
+      insights.push({ level: 'warn', text: 'IF ' + Math.round((ifRatio - 1) * 100) + '% au-dessus de la moyenne nationale' });
+    } else if (ifRatio <= 0.5 && ifRatio > 0) {
+      insights.push({ level: 'info', text: 'IF 2x en dessous de la moyenne nationale' });
     }
 
-    // Taux de gravite vs national
-    const tgRatio = s.taux_gravite / nat.taux_gravite;
+    var tgRatio = (s.taux_gravite && nat.taux_gravite > 0) ? s.taux_gravite / nat.taux_gravite : 0;
     if (tgRatio >= 2) {
-      insights.push({ level: 'danger', text: `Gravite ${tgRatio.toFixed(1)}x la moyenne nationale` });
+      insights.push({ level: 'danger', text: 'Gravite ' + tgRatio.toFixed(1) + 'x la moyenne nationale' });
     } else if (tgRatio >= 1.3) {
-      insights.push({ level: 'warn', text: `Gravite ${Math.round((tgRatio - 1) * 100)}% au-dessus de la moyenne` });
+      insights.push({ level: 'warn', text: 'Gravite ' + Math.round((tgRatio - 1) * 100) + '% au-dessus de la moyenne' });
     }
 
-    // IP rate
-    const ipRate = s.at_1er_reglement > 0 ? (s.nouvelles_ip / s.at_1er_reglement * 100) : 0;
+    var eventCount = s[cfg.eventKey] || 0;
+    var ipRate = eventCount > 0 ? (s.nouvelles_ip / eventCount * 100) : 0;
     if (ipRate >= 5) {
-      insights.push({ level: 'danger', text: `${ipRate.toFixed(1)}% des AT menent a une incapacite permanente` });
+      insights.push({ level: 'danger', text: ipRate.toFixed(1) + '% menent a une incapacite permanente' });
     } else if (ipRate >= 3) {
-      insights.push({ level: 'warn', text: `${ipRate.toFixed(1)}% des AT menent a une incapacite permanente` });
+      insights.push({ level: 'warn', text: ipRate.toFixed(1) + '% menent a une incapacite permanente' });
     }
 
-    // Deces
     if (s.deces > 0) {
-      insights.push({ level: 'danger', text: `${s.deces} deces enregistre${s.deces > 1 ? 's' : ''} en 2023` });
+      insights.push({ level: 'danger', text: s.deces + ' deces enregistre' + (s.deces > 1 ? 's' : '') + ' en 2023' });
     }
 
-    // Dominant cause
-    const sorted = Object.entries(causes).filter(([,v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    var sorted = causes ? Object.entries(causes).filter(function(pair) { return pair[1] > 0; }).sort(function(a, b) { return b[1] - a[1]; }) : [];
     if (sorted.length > 0 && sorted[0][1] >= 35) {
-      insights.push({ level: 'warn', text: `${sorted[0][0]} = ${sorted[0][1].toFixed(0)}% des accidents` });
+      insights.push({ level: 'warn', text: sorted[0][0] + ' = ' + sorted[0][1].toFixed(0) + '% des cas' });
     }
 
-    // High volume
-    if (s.at_1er_reglement >= 10000) {
-      insights.push({ level: 'info', text: `${fmt(s.at_1er_reglement)} AT, secteur a fort volume` });
+    if (eventCount >= 10000) {
+      insights.push({ level: 'info', text: fmt(eventCount) + ' cas, secteur a fort volume' });
     }
 
-    // Highlight insights button when there are insights
-    const insBtn = document.getElementById('insightsBtn');
-    const badge = document.getElementById('insightsBadge');
+    // MP-specific: high IP rate with severe taux
+    if (viewId === 'mp' && s.ip_taux_sup_10 > 0) {
+      var severeRate = eventCount > 0 ? (s.ip_taux_sup_10 / eventCount * 100) : 0;
+      if (severeRate >= 10) {
+        insights.push({ level: 'danger', text: severeRate.toFixed(0) + '% des MP avec taux IP >= 10%' });
+      }
+    }
+
+    // Evolution insights
+    var dataYears = getData(viewId).meta.years;
+    var firstYr = dataYears ? dataYears[0] : null;
+    var lastYr = dataYears ? dataYears[dataYears.length - 1] : null;
+    if (yearly && firstYr && lastYr && yearly[firstYr] && yearly[lastYr]) {
+      var y21 = yearly[firstYr], y23 = yearly[lastYr];
+      if (y21.indice_frequence > 0) {
+        var ifDelta = ((y23.indice_frequence - y21.indice_frequence) / y21.indice_frequence * 100);
+        if (ifDelta <= -15) {
+          insights.push({ level: 'info', text: 'IF en baisse de ' + Math.abs(ifDelta).toFixed(0) + '% depuis ' + firstYr });
+        } else if (ifDelta >= 15) {
+          insights.push({ level: 'warn', text: 'IF en hausse de ' + ifDelta.toFixed(0) + '% depuis ' + firstYr });
+        }
+      }
+      if (y21.taux_gravite && y21.taux_gravite > 0) {
+        var tgDelta = ((y23.taux_gravite - y21.taux_gravite) / y21.taux_gravite * 100);
+        if (tgDelta >= 20) {
+          insights.push({ level: 'danger', text: 'Gravite en hausse de ' + tgDelta.toFixed(0) + '% depuis ' + firstYr });
+        }
+      }
+    }
+
+    // Highlight insights button
+    var badgeId = viewId === 'at' ? 'insightsBadge' : viewId + '-insightsBadge';
+    var btnId = viewId === 'at' ? 'insightsBtn' : viewId + '-insightsBtn';
+    var insBtn = el(btnId);
+    var badge = el(badgeId);
     insBtn.classList.remove('has-insights');
     badge.classList.remove('visible');
     if (insights.length > 0) {
@@ -1346,147 +1832,161 @@
       insBtn.classList.add('has-insights');
     }
 
-    // Update drawer subtitle
-    const store = getStore(currentLevel);
-    const entry = store[currentCode];
+    // Update shared drawer
+    var vs = viewState[viewId];
+    var store = getStore(viewId, vs.level);
+    var entry = store[vs.code];
     if (entry) {
-      document.getElementById('drawerSub').textContent = `${currentCode} \u2014 ${entry.libelle}`;
+      el('drawerSub').textContent = vs.code + ' \u2014 ' + entry.libelle;
     }
 
-    // Populate drawer body
-    const body = document.getElementById('drawerBody');
-    const icons = { danger: '\u26A0', warn: '\u25C9', info: '\u2139' };
+    var body = el('drawerBody');
+    var icons = { danger: '\u26A0', warn: '\u25C9', info: '\u2139' };
     if (insights.length === 0) {
       body.innerHTML = '<div class="insights-drawer-empty">Aucun insight pour ce secteur.</div>';
     } else {
-      body.innerHTML = insights.map(i =>
-        `<div class="insight ${i.level}"><span class="insight-icon">${icons[i.level]}</span>${i.text}</div>`
-      ).join('');
+      body.innerHTML = insights.map(function(i) {
+        return '<div class="insight ' + i.level + '"><span class="insight-icon">' + icons[i.level] + '</span>' + i.text + '</div>';
+      }).join('');
     }
+  }
+
+  function setAllBtns(suffix, cls, val) {
+    ['', 'mp-', 'trajet-'].forEach(function(p) {
+      var b = el(p + suffix);
+      if (b) b.classList.toggle(cls, val);
+    });
   }
 
   window.toggleInsights = function() {
-    // Close share drawer if open
-    const shareDrawer = document.getElementById('shareDrawer');
+    var shareDrawer = el('shareDrawer');
     if (shareDrawer.classList.contains('open')) {
       shareDrawer.classList.remove('open');
-      document.getElementById('shareBtn').classList.remove('active');
+      setAllBtns('shareBtn', 'active', false);
     }
-    const drawer = document.getElementById('insightsDrawer');
-    const btn = document.getElementById('insightsBtn');
-    const isOpen = drawer.classList.toggle('open');
-    btn.classList.toggle('active', isOpen);
+    var drawer = el('insightsDrawer');
+    var isOpen = drawer.classList.toggle('open');
+    setAllBtns('insightsBtn', 'active', isOpen);
   };
 
   window.toggleShare = function() {
-    // Close insights drawer if open
-    const insightsDrawer = document.getElementById('insightsDrawer');
+    var insightsDrawer = el('insightsDrawer');
     if (insightsDrawer.classList.contains('open')) {
       insightsDrawer.classList.remove('open');
-      document.getElementById('insightsBtn').classList.remove('active');
+      setAllBtns('insightsBtn', 'active', false);
     }
-    const drawer = document.getElementById('shareDrawer');
-    const btn = document.getElementById('shareBtn');
-    const isOpen = drawer.classList.toggle('open');
-    btn.classList.toggle('active', isOpen);
+    var drawer = el('shareDrawer');
+    var isOpen = drawer.classList.toggle('open');
+    setAllBtns('shareBtn', 'active', isOpen);
   };
-
 
   window.copyLink = function() {
     navigator.clipboard.writeText(window.location.href).then(function() {
-      const label = document.querySelector('#shareDrawer .share-option:first-child .share-option-label');
-      const original = label.textContent;
-      label.textContent = 'Copie !';
-      setTimeout(function() { label.textContent = original; }, 2000);
+      var labels = document.querySelectorAll('#shareDrawer .share-option:first-child .share-option-label');
+      labels.forEach(function(label) {
+        var original = label.textContent;
+        label.textContent = 'Copie !';
+        setTimeout(function() { label.textContent = original; }, 2000);
+      });
     });
   };
 
-  window.downloadPDF = function() {
-    window.print();
-  };
+  window.downloadPDF = function() { window.print(); };
 
-  function renderPositionStrip(code, level, ifValue) {
-    const store = getStore(level);
-    const allIF = Object.entries(store)
-      .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }))
-      .filter(d => d.if_val > 0)
-      .sort((a, b) => a.if_val - b.if_val);
+  // ── Position strip ──
+  function renderPositionStrip(viewId, code, level, ifValue) {
+    var store = getStore(viewId, level);
+    var data = getData(viewId);
+    var allIF = Object.entries(store)
+      .map(function(pair) { return { code: pair[0], libelle: pair[1].libelle, if_val: pair[1].stats.indice_frequence }; })
+      .filter(function(d) { return d.if_val > 0; })
+      .sort(function(a, b) { return a.if_val - b.if_val; });
 
-    const maxIF = allIF[allIF.length - 1].if_val;
-    const levelLabel = level === 'naf5' ? 'NAF' : level === 'naf4' ? 'NAF4' : 'NAF2';
-    document.getElementById('posTitle').textContent =
-      `Positionnement IF // ${allIF.length} codes ${levelLabel}`;
+    if (allIF.length === 0) return;
+    var maxIF = allIF[allIF.length - 1].if_val;
+    var levelLabel = level === 'naf5' ? 'NAF' : level === 'naf4' ? 'NAF4' : 'NAF2';
+    viewEl(viewId, 'posTitle').textContent =
+      'Positionnement IF // ' + allIF.length + ' codes ' + levelLabel;
 
-    const strip = document.getElementById('posStrip');
-    let html = '<div class="pos-track"></div><div class="pos-tip" id="posTip"></div>';
+    var strip = viewEl(viewId, 'posStrip');
+    var tipId = viewId + '-posTip';
+    var html = '<div class="pos-track"></div><div class="pos-tip" id="' + tipId + '"></div>';
 
-    // Peer dots
-    allIF.forEach((d, i) => {
-      const x = (d.if_val / maxIF * 96) + 2;
-      const isCurrent = d.code === code;
-      html += `<div class="pos-dot${isCurrent ? ' current' : ''}" style="left:${x}%" data-idx="${i}"></div>`;
+    allIF.forEach(function(d, i) {
+      var x = (d.if_val / maxIF * 96) + 2;
+      var isCurrent = d.code === code;
+      html += '<div class="pos-dot' + (isCurrent ? ' current' : '') + '" style="left:' + x + '%" data-idx="' + i + '"></div>';
       if (isCurrent) {
-        html += `<div class="pos-marker-label" style="left:${x}%">IF ${ifValue.toFixed(1)}</div>`;
+        html += '<div class="pos-marker-label" style="left:' + x + '%">IF ' + ifValue.toFixed(1) + '</div>';
       }
     });
 
-    // National average marker
-    const natIF = DATA.meta.national.indice_frequence;
-    const natX = (natIF / maxIF * 96) + 2;
-    html += `<div class="pos-national" style="left:${natX}%"></div>`;
-    html += `<div class="pos-national-label" style="left:${natX}%">Moy. ${natIF.toFixed(1)}</div>`;
+    var natIF = data.meta.national.indice_frequence;
+    var natX = (natIF / maxIF * 96) + 2;
+    html += '<div class="pos-national" style="left:' + natX + '%"></div>';
+    html += '<div class="pos-national-label" style="left:' + natX + '%">Moy. ' + natIF.toFixed(1) + '</div>';
 
-    // Axis labels
-    const minIF = allIF[0].if_val;
-    html += `<div class="pos-axis" style="left:2%">${minIF.toFixed(0)}</div>`;
-    html += `<div class="pos-axis pos-end">${maxIF.toFixed(0)}</div>`;
+    var minIF = allIF[0].if_val;
+    html += '<div class="pos-axis" style="left:2%">' + minIF.toFixed(0) + '</div>';
+    html += '<div class="pos-axis pos-end">' + maxIF.toFixed(0) + '</div>';
 
     strip.innerHTML = html;
 
-    // Tooltip + click
-    const tip = document.getElementById('posTip');
-    strip.querySelectorAll('.pos-dot:not(.current)').forEach(dot => {
-      const d = allIF[+dot.dataset.idx];
+    var tip = el(tipId);
+    strip.querySelectorAll('.pos-dot:not(.current)').forEach(function(dot) {
+      var d = allIF[+dot.dataset.idx];
       dot.addEventListener('mouseenter', function() {
-        const short = d.libelle.length > 30 ? d.libelle.substring(0, 30) + '...' : d.libelle;
-        tip.textContent = `${d.code}  ${short}  IF ${d.if_val.toFixed(1)}`;
+        var short = d.libelle.length > 30 ? d.libelle.substring(0, 30) + '...' : d.libelle;
+        tip.textContent = d.code + '  ' + short + '  IF ' + d.if_val.toFixed(1);
         tip.style.left = dot.style.left;
         tip.classList.add('visible');
       });
-      dot.addEventListener('mouseleave', function() {
-        tip.classList.remove('visible');
-      });
+      dot.addEventListener('mouseleave', function() { tip.classList.remove('visible'); });
       dot.addEventListener('click', function() {
         tip.classList.remove('visible');
-        selectCode(d.code, level);
+        selectCode(viewId, d.code, level);
       });
     });
   }
 
-  function renderCausesChart(causes) {
-    const sorted = Object.entries(causes)
-      .filter(([,v]) => v > 0)
-      .sort((a,b) => b[1] - a[1]);
+  // ── Causes chart ──
+  function renderCausesChart(viewId, causes) {
+    var sorted = Object.entries(causes)
+      .filter(function(pair) { return pair[1] > 0; })
+      .sort(function(a, b) { return b[1] - a[1]; });
 
-    // Show top 6, lump the rest into "Autres"
-    const MAX = 6;
-    let chartData;
-    if (sorted.length > MAX) {
-      const top = sorted.slice(0, MAX);
-      const rest = sorted.slice(MAX).reduce((sum, [,v]) => sum + v, 0);
-      chartData = [...top, ['Autres', rest]];
+    var chartData;
+    // AT has 12 cause columns: cap at 6 + Autres. MP has few categories: show all.
+    if (viewId === 'at' && sorted.length > 6) {
+      var top = sorted.slice(0, 6);
+      var rest = sorted.slice(6).reduce(function(sum, pair) { return sum + pair[1]; }, 0);
+      chartData = top.concat([['Autres', rest]]);
     } else {
       chartData = sorted;
     }
 
-    const labels = chartData.map(([k]) => k);
-    const values = chartData.map(([,v]) => v);
+    if (chartData.length === 0) {
+      viewEl(viewId, 'causesWrap').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:320px;color:var(--text-dim)">Aucune donnee de cause</div>';
+      return;
+    }
 
-    if (causesChart) causesChart.destroy();
-    causesChart = new Chart(document.getElementById('causesChart'), {
+    var labels = chartData.map(function(pair) { return pair[0]; });
+    var values = chartData.map(function(pair) { return pair[1]; });
+
+    var vs = viewState[viewId];
+    if (vs.causesChart) vs.causesChart.destroy();
+
+    // Ensure canvas exists
+    var wrap = viewEl(viewId, 'causesWrap');
+    if (!wrap.querySelector('canvas')) {
+      wrap.innerHTML = '<canvas id="' + viewId + '-causesChart"></canvas>';
+    }
+    wrap.style.height = '320px';
+
+    vs.causesChart = new Chart(viewEl(viewId, 'causesChart'), {
       type: 'doughnut',
       data: {
-        labels,
+        labels: labels,
         datasets: [{
           data: values,
           backgroundColor: CAUSE_COLORS.slice(0, values.length),
@@ -1509,16 +2009,18 @@
               font: { size: 11, family: "'DM Sans', sans-serif" },
               color: '#8b949e',
               generateLabels: function(chart) {
-                const data = chart.data;
-                return data.labels.map((label, i) => ({
-                  text: label + ' \u2013 ' + data.datasets[0].data[i].toFixed(0) + '%',
-                  fillStyle: data.datasets[0].backgroundColor[i],
-                  fontColor: '#8b949e',
-                  strokeStyle: 'transparent',
-                  pointStyle: 'circle',
-                  index: i,
-                  hidden: !chart.getDataVisibility(i),
-                }));
+                var d = chart.data;
+                return d.labels.map(function(label, i) {
+                  return {
+                    text: label + ' \u2013 ' + d.datasets[0].data[i].toFixed(0) + '%',
+                    fillStyle: d.datasets[0].backgroundColor[i],
+                    fontColor: '#8b949e',
+                    strokeStyle: 'transparent',
+                    pointStyle: 'circle',
+                    index: i,
+                    hidden: !chart.getDataVisibility(i),
+                  };
+                });
               }
             }
           },
@@ -1528,109 +2030,399 @@
             borderWidth: 1,
             titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
             bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
-            callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toFixed(1)}%` }
+            callbacks: { label: function(ctx) { return ' ' + ctx.label + ': ' + ctx.parsed.toFixed(1) + '%'; } }
           }
         }
-      },
-      plugins: []
+      }
     });
   }
 
-  function renderFunnelChart(s) {
-    const items = [
-      { label: 'Deces',                    value: s.deces || 0,             color: '#c74a43' },
-      { label: 'Incapacites permanentes', value: s.nouvelles_ip || 0,      color: '#d4a043' },
-      { label: 'AT avec arret 4j+',       value: s.at_4j_arret || 0,      color: '#4e8ac5' },
-      { label: 'AT en 1er reglement',     value: s.at_1er_reglement || 0,  color: '#6a5ec8' },
-    ];
+  // ── Funnel chart ──
+  function renderFunnelChart(viewId, s, cfg) {
+    var items = cfg.funnelItems(s);
+    var maxVal = items[items.length - 1].value || 1;
+    var wrap = viewEl(viewId, 'funnelWrap');
 
-    const maxVal = items[items.length - 1].value || 1;
-    const wrap = document.getElementById('funnelWrap');
-
-    const bars = items.map((d, i) => {
-      // Fixed tiers: each step visually distinct, numbers tell the data story
-      const tierWidths = [22, 46, 74, 100];
-      const pct = tierWidths[i] || 100;
-      const ofTotal = (d.value / maxVal * 100).toFixed(1);
-      return `<div class="funnel-bar" style="width:${pct}%;background:${d.color}" data-idx="${i}" data-pct="${ofTotal}">
-        <span class="funnel-bar-label">${d.label}</span>
-        <span class="funnel-bar-value">${fmt(d.value)}</span>
-      </div>`;
+    var bars = items.map(function(d, i) {
+      // Generate evenly spaced tiers: smallest at top, 100% at bottom
+      var n = items.length;
+      var pct = Math.round(((i + 1) / n) * 100);
+      var ofTotal = (d.value / maxVal * 100).toFixed(1);
+      return '<div class="funnel-bar" style="width:' + pct + '%;background:' + d.color + '" data-idx="' + i + '" data-pct="' + ofTotal + '">' +
+        '<span class="funnel-bar-label">' + d.label + '</span>' +
+        '<span class="funnel-bar-value">' + fmt(d.value) + '</span>' +
+        '</div>';
     }).join('');
 
+    var tipId = viewId + '-funnelTip';
     wrap.style.position = 'relative';
-    wrap.innerHTML = `<div class="funnel">${bars}</div><div class="funnel-tooltip" id="funnelTip"></div>`;
+    wrap.innerHTML = '<div class="funnel">' + bars + '</div><div class="funnel-tooltip" id="' + tipId + '"></div>';
 
-    const tip = document.getElementById('funnelTip');
-    wrap.querySelectorAll('.funnel-bar').forEach(bar => {
-      const i = +bar.dataset.idx;
-      const d = items[i];
-      const pctText = i === items.length - 1 ? '100% des AT' : bar.dataset.pct + '% des AT';
-      bar.addEventListener('mouseenter', function(e) {
+    var tip = el(tipId);
+    var eventLabel = VIEW_CONFIG[viewId].eventLabel;
+    wrap.querySelectorAll('.funnel-bar').forEach(function(bar) {
+      var i = +bar.dataset.idx;
+      var pctText = i === items.length - 1 ? '100% des ' + eventLabel : bar.dataset.pct + '% des ' + eventLabel;
+      bar.addEventListener('mouseenter', function() {
         tip.innerHTML = pctText;
         tip.classList.add('visible');
       });
       bar.addEventListener('mousemove', function(e) {
-        const rect = wrap.getBoundingClientRect();
+        var rect = wrap.getBoundingClientRect();
         tip.style.left = (e.clientX - rect.left + 12) + 'px';
         tip.style.top = (e.clientY - rect.top - 32) + 'px';
       });
-      bar.addEventListener('mouseleave', function() {
-        tip.classList.remove('visible');
-      });
+      bar.addEventListener('mouseleave', function() { tip.classList.remove('visible'); });
     });
   }
 
-  // ── Comparison chart rules (no top-10 cap, show ALL entries) ──
-  // NAF  (naf5): all NAF5 siblings in same NAF2 division (e.g. 4711D → all 47xx)
-  // NAF4 (naf4): all NAF5 codes under that NAF4 group (e.g. 4711 → 4711A,4711B,4711D…)
-  // NAF2 (naf2): all NAF2 divisions
-  // Clicking a bar navigates to that code (NAF4 bars navigate to NAF5 level).
-  function renderComparisonChart(code, level) {
-    let items = [];
-    const naf5Store = getStore('naf5');
-    let clickLevel = level; // level to navigate to on click
+  // ── Evolution charts ──
+  function renderEvolutionCharts(viewId, entry, level) {
+    var data = getData(viewId);
+    var years = data.meta.years;
+    var sec = viewEl(viewId, 'evoSection');
+    if (!years || years.length < 2 || !entry.yearly) {
+      sec.style.display = 'none';
+      return;
+    }
+    sec.style.display = '';
+    var vs = viewState[viewId];
+    vs.evoCharts.forEach(function(c) { c.destroy(); });
+    vs.evoCharts = [];
 
-    if (level === 'naf5') {
-      const naf2 = code.substring(0, 2);
-      items = Object.entries(naf5Store)
-        .filter(([k]) => k.substring(0, 2) === naf2)
-        .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
-      document.getElementById('compTitle').textContent =
-        `Comparaison // division ${naf2}`;
-    } else if (level === 'naf4') {
-      // Drill into NAF5 children of this NAF4 group
-      items = Object.entries(naf5Store)
-        .filter(([k]) => k.substring(0, 4) === code)
-        .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
-      clickLevel = 'naf5'; // bars are NAF5 codes
-      document.getElementById('compTitle').textContent =
-        `Comparaison // sous-classes ${code}`;
-    } else {
-      const naf2Store = getStore('naf2');
-      items = Object.entries(naf2Store)
-        .map(([k, v]) => ({ code: k, libelle: v.libelle, if_val: v.stats.indice_frequence }));
-      document.getElementById('compTitle').textContent =
-        `Comparaison // toutes divisions`;
+    var cfg = VIEW_CONFIG[viewId];
+    var eventKey = cfg.eventKey;
+    var eventLabel = cfg.eventLabel;
+    var natYearly = data.meta.national.yearly;
+
+    // Prepare data arrays
+    var sectorEvents = [], sectorIF = [], sectorTG = [];
+    var natIF = [], natTG = [];
+    years.forEach(function(yr) {
+      var y = entry.yearly[yr];
+      var n = natYearly[yr];
+      sectorEvents.push(y ? y.events : null);
+      sectorIF.push(y ? y.indice_frequence : null);
+      sectorTG.push(y ? y.taux_gravite : null);
+      natIF.push(n ? n.indice_frequence : null);
+      natTG.push(n ? n.taux_gravite : null);
+    });
+
+    // Common chart options
+    var baseOpts = {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11, family: 'var(--sans)' }, color: '#94a3b8', padding: 12 } },
+        tooltip: { backgroundColor: '#1e293b', titleFont: { family: 'var(--sans)', size: 12 }, bodyFont: { family: 'var(--mono)', size: 12 }, cornerRadius: 6, padding: 10 },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: 'var(--mono)', size: 12, weight: '600' }, color: '#94a3b8' } },
+        y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { font: { family: 'var(--mono)', size: 11 }, color: '#64748b' } },
+      },
+    };
+
+    function deltaPlugin(vals) {
+      return {
+        id: 'deltaLabel',
+        afterDraw: function(chart) {
+          if (!vals || vals.length < 2) return;
+          var first = vals[0], last = vals[vals.length - 1];
+          if (first == null || last == null || first === 0) return;
+          var pct = ((last - first) / first * 100).toFixed(1);
+          var sign = pct > 0 ? '+' : '';
+          var color = pct > 0 ? '#ef4444' : pct < 0 ? '#22c55e' : '#64748b';
+          var ctx = chart.ctx;
+          ctx.save();
+          ctx.font = '600 12px var(--mono)';
+          ctx.fillStyle = color;
+          ctx.textAlign = 'right';
+          ctx.fillText(sign + pct + '%', chart.chartArea.right, chart.chartArea.top - 6);
+          ctx.restore();
+        }
+      };
     }
 
-    items.sort((a, b) => b.if_val - a.if_val);
+    // Generate gradient colors for N bars
+    function barColors(r, g, b, n) {
+      var bgs = [], borders = [];
+      for (var i = 0; i < n; i++) {
+        var a = 0.3 + (i / Math.max(n - 1, 1)) * 0.5;
+        bgs.push('rgba(' + r + ',' + g + ',' + b + ',' + a.toFixed(2) + ')');
+        borders.push('rgba(' + r + ',' + g + ',' + b + ',1)');
+      }
+      return { bg: bgs, border: borders };
+    }
+    var nYears = years.length;
+    var evColors = barColors(99, 102, 241, nYears);
+    var ifColors = barColors(234, 179, 8, nYears);
 
-    // Highlight: NAF5/NAF2 = selected code in accent; NAF4 = all bars accent (breakdown of current)
-    const labels = items.map(s => s.code);
-    const values = items.map(s => s.if_val);
-    const allAccent = (level === 'naf4');
-    const colors = items.map(s => (allAccent || s.code === code) ? '#d4a043' : '#2d333b');
-    const borderColors = items.map(s => (allAccent || s.code === code) ? '#d4a043' : '#373e47');
+    // 1. Events chart (line for trajet, bar for others)
+    var evCanvas = viewEl(viewId, 'evoEvents');
+    var evDataset = viewId === 'trajet'
+      ? { label: eventLabel, data: sectorEvents, borderColor: '#6366f1', borderWidth: 2, pointRadius: 5, pointBackgroundColor: '#6366f1', pointHoverRadius: 7, fill: true, backgroundColor: 'rgba(99,102,241,0.1)', tension: 0.3 }
+      : { label: eventLabel, data: sectorEvents, backgroundColor: evColors.bg, borderColor: evColors.border, borderWidth: 1, borderRadius: 4 };
+    vs.evoCharts.push(new Chart(evCanvas, {
+      type: viewId === 'trajet' ? 'line' : 'bar',
+      data: { labels: years, datasets: [evDataset] },
+      options: Object.assign({}, baseOpts, {
+        plugins: Object.assign({}, baseOpts.plugins, {
+          title: { display: true, text: eventLabel, font: { family: 'var(--sans)', size: 13, weight: '500' }, color: '#cbd5e1', padding: { bottom: 8 } },
+        }),
+      }),
+      plugins: viewId === 'trajet' ? [] : [deltaPlugin(sectorEvents)],
+    }));
 
-    const canvas = document.getElementById('compChart');
-    canvas.style.cursor = 'pointer';
+    // 2. IF chart (bar + national line) - skip for views without IF canvas
+    var ifCanvas = viewEl(viewId, 'evoIF');
+    if (ifCanvas) {
+      vs.evoCharts.push(new Chart(ifCanvas, {
+        type: 'bar',
+        data: {
+          labels: years,
+          datasets: [
+            {
+              label: 'Secteur', data: sectorIF,
+              backgroundColor: ifColors.bg,
+              borderColor: ifColors.border, borderWidth: 1, borderRadius: 4,
+            },
+            {
+              label: 'National', data: natIF, type: 'line',
+              borderColor: '#64748b', borderWidth: 2, borderDash: [6, 3],
+              pointRadius: 4, pointBackgroundColor: '#64748b',
+              fill: false,
+            }
+          ]
+        },
+        options: Object.assign({}, baseOpts, {
+          plugins: Object.assign({}, baseOpts.plugins, {
+            title: { display: true, text: 'Indice de Frequence', font: { family: 'var(--sans)', size: 13, weight: '500' }, color: '#cbd5e1', padding: { bottom: 8 } },
+          }),
+        }),
+        plugins: [deltaPlugin(sectorIF)],
+      }));
+    }
 
-    if (compChart) compChart.destroy();
-    compChart = new Chart(canvas, {
+    // 3. TG chart (bar + national line) - skip for views without TG
+    var tgCanvas = viewEl(viewId, 'evoTG');
+    if (tgCanvas) {
+      var tgColors = barColors(239, 68, 68, nYears);
+      vs.evoCharts.push(new Chart(tgCanvas, {
+        type: 'bar',
+        data: {
+          labels: years,
+          datasets: [
+            {
+              label: 'Secteur', data: sectorTG,
+              backgroundColor: tgColors.bg,
+              borderColor: tgColors.border, borderWidth: 1, borderRadius: 4,
+            },
+            {
+              label: 'National', data: natTG, type: 'line',
+              borderColor: '#64748b', borderWidth: 2, borderDash: [6, 3],
+              pointRadius: 4, pointBackgroundColor: '#64748b',
+              fill: false,
+            }
+          ]
+        },
+        options: Object.assign({}, baseOpts, {
+          plugins: Object.assign({}, baseOpts.plugins, {
+            title: { display: true, text: 'Taux de Gravite', font: { family: 'var(--sans)', size: 13, weight: '500' }, color: '#cbd5e1', padding: { bottom: 8 } },
+          }),
+        }),
+        plugins: [deltaPlugin(sectorTG)],
+      }));
+    }
+  }
+
+  // ── Demographics charts (AT only) ──
+  function renderDemographics(viewId, entry) {
+    var section = viewEl(viewId, 'demoSection');
+    if (!section) return;
+
+    var demo = entry.demographics;
+    var vs = viewState[viewId];
+
+    // Destroy previous charts
+    if (vs.demoCharts) vs.demoCharts.forEach(function(c) { c.destroy(); });
+    vs.demoCharts = [];
+
+    if (!demo || !demo.sex || (!demo.sex.masculin && !demo.sex.feminin)) {
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = '';
+
+    // Ensure canvases exist
+    var sexWrap = section.querySelector('#' + viewId + '-demoSex').parentElement;
+    var ageWrap = section.querySelector('#' + viewId + '-demoAge').parentElement;
+    sexWrap.innerHTML = '<canvas id="' + viewId + '-demoSex"></canvas>';
+    ageWrap.innerHTML = '<canvas id="' + viewId + '-demoAge"></canvas>';
+
+    var sexCanvas = el(viewId + '-demoSex');
+    var ageCanvas = el(viewId + '-demoAge');
+
+    // 1. Sex donut
+    var sexLabels = ['Masculin', 'Feminin'];
+    var sexValues = [demo.sex.masculin || 0, demo.sex.feminin || 0];
+    var sexTotal = sexValues[0] + sexValues[1];
+
+    vs.demoCharts.push(new Chart(sexCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: sexLabels,
+        datasets: [{
+          data: sexValues,
+          backgroundColor: ['#4e9af5', '#e5534b'],
+          borderColor: '#161b22',
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '50%',
+        plugins: {
+          title: { display: true, text: 'Repartition par sexe', font: { family: 'var(--sans)', size: 13, weight: '500' }, color: '#cbd5e1', padding: { bottom: 8 } },
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 12,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: { size: 11, family: "'DM Sans', sans-serif" },
+              color: '#e6edf3',
+              generateLabels: function(chart) {
+                var d = chart.data;
+                return d.labels.map(function(label, i) {
+                  return {
+                    text: label,
+                    fillStyle: d.datasets[0].backgroundColor[i],
+                    fontColor: '#e6edf3',
+                    strokeStyle: 'transparent',
+                    pointStyle: 'circle',
+                    hidden: false,
+                    index: i,
+                  };
+                });
+              }
+            }
+          },
+          datalabels: {
+            color: '#fff',
+            font: { size: 14, weight: '600', family: "'DM Sans', sans-serif" },
+            formatter: function(value) {
+              var pct = sexTotal > 0 ? (value / sexTotal * 100).toFixed(0) : 0;
+              return pct + '%';
+            },
+            display: function(ctx) {
+              return ctx.dataset.data[ctx.dataIndex] > 0;
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                var pct = sexTotal > 0 ? (ctx.raw / sexTotal * 100).toFixed(1) : 0;
+                return ' ' + fmt(ctx.raw) + ' (' + pct + '%)';
+              }
+            }
+          }
+        }
+      },
+      plugins: [ChartDataLabels]
+    }));
+
+    // 2. Age bar chart (horizontal)
+    var ageGroups = ['15-19', '20-29', '30-39', '40-49', '50-59', '60+'];
+    var ageLabels = ['< 20 ans', '20-29 ans', '30-39 ans', '40-49 ans', '50-59 ans', '60+ ans'];
+    var ageValues = ageGroups.map(function(g) { return (demo.age && demo.age[g]) || 0; });
+    var ageColors = ['rgba(99,102,241,0.35)', 'rgba(99,102,241,0.45)', 'rgba(99,102,241,0.55)', 'rgba(99,102,241,0.65)', 'rgba(99,102,241,0.78)', 'rgba(99,102,241,0.9)'];
+
+    vs.demoCharts.push(new Chart(ageCanvas, {
       type: 'bar',
       data: {
-        labels,
+        labels: ageLabels,
+        datasets: [{
+          data: ageValues,
+          backgroundColor: ageColors,
+          borderColor: ageColors.map(function() { return 'rgba(99,102,241,1)'; }),
+          borderWidth: 1,
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          title: { display: true, text: 'Repartition par age', font: { family: 'var(--sans)', size: 13, weight: '500' }, color: '#cbd5e1', padding: { bottom: 8 } },
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                var total = ageValues.reduce(function(s, v) { return s + v; }, 0);
+                var pct = total > 0 ? (ctx.raw / total * 100).toFixed(1) : 0;
+                return ' ' + fmt(ctx.raw) + ' AT (' + pct + '%)';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            ticks: { font: { size: 11, family: "'JetBrains Mono', monospace" }, color: '#8b949e' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 11, family: "'DM Sans', sans-serif" }, color: '#8b949e' }
+          }
+        }
+      }
+    }));
+  }
+
+  // ── Comparison chart ──
+  function renderComparisonChart(viewId, code, level) {
+    var data = getData(viewId);
+    var items = [];
+    var naf5Store = getStore(viewId, 'naf5');
+    var clickLevel = level;
+
+    if (level === 'naf5') {
+      var naf2 = code.substring(0, 2);
+      items = Object.entries(naf5Store)
+        .filter(function(pair) { return pair[0].substring(0, 2) === naf2; })
+        .map(function(pair) { return { code: pair[0], libelle: pair[1].libelle, if_val: pair[1].stats.indice_frequence }; });
+      viewEl(viewId, 'compTitle').textContent = 'Comparaison // division ' + naf2;
+    } else if (level === 'naf4') {
+      items = Object.entries(naf5Store)
+        .filter(function(pair) { return pair[0].substring(0, 4) === code; })
+        .map(function(pair) { return { code: pair[0], libelle: pair[1].libelle, if_val: pair[1].stats.indice_frequence }; });
+      clickLevel = 'naf5';
+      viewEl(viewId, 'compTitle').textContent = 'Comparaison // sous-classes ' + code;
+    } else {
+      var naf2Store = getStore(viewId, 'naf2');
+      items = Object.entries(naf2Store)
+        .map(function(pair) { return { code: pair[0], libelle: pair[1].libelle, if_val: pair[1].stats.indice_frequence }; });
+      viewEl(viewId, 'compTitle').textContent = 'Comparaison // toutes divisions';
+    }
+
+    items.sort(function(a, b) { return b.if_val - a.if_val; });
+
+    var labels = items.map(function(s) { return s.code; });
+    var values = items.map(function(s) { return s.if_val; });
+    var allAccent = (level === 'naf4');
+    var colors = items.map(function(s) { return (allAccent || s.code === code) ? '#d4a043' : '#2d333b'; });
+    var borderColors = items.map(function(s) { return (allAccent || s.code === code) ? '#d4a043' : '#373e47'; });
+
+    var canvas = viewEl(viewId, 'compChart');
+    canvas.style.cursor = 'pointer';
+
+    var vs = viewState[viewId];
+    if (vs.compChart) vs.compChart.destroy();
+    vs.compChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
         datasets: [{
           data: values,
           backgroundColor: colors,
@@ -1644,10 +2436,10 @@
         maintainAspectRatio: false,
         onClick: function(evt, elements) {
           if (elements.length > 0) {
-            const idx = elements[0].index;
-            const target = items[idx];
+            var idx = elements[0].index;
+            var target = items[idx];
             if (target && target.code !== code) {
-              selectCode(target.code, clickLevel);
+              selectCode(viewId, target.code, clickLevel);
             }
           }
         },
@@ -1660,11 +2452,11 @@
             titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
             bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
             callbacks: {
-              title: ctx => {
-                const i = ctx[0].dataIndex;
-                return `${items[i].code}  ${items[i].libelle}`;
+              title: function(ctx) {
+                var i = ctx[0].dataIndex;
+                return items[i].code + '  ' + items[i].libelle;
               },
-              label: ctx => ` IF: ${ctx.parsed.y.toFixed(1)}`
+              label: function(ctx) { return ' IF: ' + ctx.parsed.y.toFixed(1); }
             }
           }
         },
@@ -1691,70 +2483,96 @@
         }
       }
     });
-    document.getElementById('compWrap').style.height = '320px';
+    viewEl(viewId, 'compWrap').style.height = '320px';
   }
 
-  // --- URL hash ---
+  // ── URL hash routing ──
   function loadFromHash() {
-    const hash = window.location.hash.replace('#', '').trim();
+    var hash = window.location.hash.replace('#', '').trim();
     if (!hash) return;
 
-    for (const level of ['naf5', 'naf4', 'naf2']) {
-      if (getStore(level)[hash]) {
-        setLevel(level);
-        selectCode(hash, level);
+    // Parse: #at/CODE, #mp/CODE, or legacy #CODE
+    var viewId, code;
+    if (hash.startsWith('at/')) {
+      viewId = 'at';
+      code = hash.substring(3);
+    } else if (hash.startsWith('mp/')) {
+      viewId = 'mp';
+      code = hash.substring(3);
+    } else if (hash.startsWith('trajet/')) {
+      viewId = 'trajet';
+      code = hash.substring(7);
+    } else if (hash === 'at' || hash === 'mp' || hash === 'trajet') {
+      switchView(hash);
+      return;
+    } else {
+      // Legacy: bare code maps to AT
+      viewId = 'at';
+      code = hash;
+    }
+
+    if (viewId !== activeView) switchView(viewId);
+
+    if (!code) return;
+
+    var data = getData(viewId);
+    for (var i = 0; i < 3; i++) {
+      var levels = ['naf5', 'naf4', 'naf2'];
+      var level = levels[i];
+      if (data['by_' + level][code]) {
+        setLevel(viewId, level);
+        selectCode(viewId, code, level);
         return;
       }
     }
-    const upper = hash.toUpperCase();
-    for (const level of ['naf5', 'naf4', 'naf2']) {
-      if (getStore(level)[upper]) {
-        setLevel(level);
-        selectCode(upper, level);
+    var upper = code.toUpperCase();
+    for (var j = 0; j < 3; j++) {
+      var lvl = ['naf5', 'naf4', 'naf2'][j];
+      if (data['by_' + lvl][upper]) {
+        setLevel(viewId, lvl);
+        selectCode(viewId, upper, lvl);
         return;
       }
     }
   }
 
-  // --- Clickable examples in empty state ---
-  document.querySelectorAll('.naf-row[data-code],.naf-example[data-code]').forEach(el => {
-    el.addEventListener('click', function() {
-      const code = (this.closest('.naf-row') || this).querySelector('.naf-example')?.dataset.code || this.dataset.code;
-      if (!code) return;
-      for (const level of ['naf5', 'naf4', 'naf2']) {
-        if (getStore(level)[code]) { setLevel(level); selectCode(code, level); return; }
-      }
-    });
-  });
-  // Make entire row clickable
-  document.querySelectorAll('.naf-row').forEach(row => {
-    const ex = row.querySelector('.naf-example');
-    if (ex) row.addEventListener('click', () => {
-      const code = ex.dataset.code;
-      for (const level of ['naf5', 'naf4', 'naf2']) {
-        if (getStore(level)[code]) { setLevel(level); selectCode(code, level); return; }
+  // ── Init ──
+  setupSearch('at');
+  setupSearch('mp');
+  setupSearch('trajet');
+
+  // Clickable examples in empty state
+  document.querySelectorAll('.naf-row[data-view]').forEach(function(row) {
+    row.addEventListener('click', function() {
+      var viewId = this.dataset.view;
+      var ex = this.querySelector('.naf-example');
+      if (!ex) return;
+      var code = ex.dataset.code;
+      var data = getData(viewId);
+      var levels = ['naf5', 'naf4', 'naf2'];
+      for (var i = 0; i < levels.length; i++) {
+        if (data['by_' + levels[i]][code]) {
+          setLevel(viewId, levels[i]);
+          selectCode(viewId, code, levels[i]);
+          return;
+        }
       }
     });
   });
 
-  // --- Keyboard shortcut: / to focus search ---
+  // Keyboard shortcuts
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-      const insightsDrawer = document.getElementById('insightsDrawer');
-      if (insightsDrawer.classList.contains('open')) {
-        toggleInsights();
-        return;
-      }
-      const shareDrawer = document.getElementById('shareDrawer');
-      if (shareDrawer.classList.contains('open')) {
-        toggleShare();
-        return;
-      }
+      if (el('insightsDrawer').classList.contains('open')) { toggleInsights(); return; }
+      if (el('shareDrawer').classList.contains('open')) { toggleShare(); return; }
     }
-    if (e.key === '/' && !e.ctrlKey && !e.metaKey && document.activeElement !== searchInput) {
-      e.preventDefault();
-      searchInput.focus();
-      searchInput.select();
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+      var searchInput = viewEl(activeView, 'searchInput');
+      if (document.activeElement !== searchInput) {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
     }
   });
 
